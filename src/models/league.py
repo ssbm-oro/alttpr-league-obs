@@ -2,7 +2,7 @@ from typing import Optional, List, Any
 from datetime import datetime
 from models import (
     from_int, from_bool, from_str, from_list, to_class, from_none,
-     from_datetime, from_union
+     from_datetime, from_union, is_type
 )
 
 
@@ -56,6 +56,44 @@ class Crew:
         return result
 
 
+class Team:
+    team_id: Optional[int]
+    season_id: Optional[int]
+    team_name: Optional[str]
+    logo_id: Optional[int]
+    file_name: Optional[str]
+    team_logo: Optional[str]
+
+    def __init__(self, team_id: Optional[int], season_id: Optional[int], team_name: Optional[str], logo_id: Optional[int], file_name: Optional[str], team_logo: Optional[str]) -> None:
+        self.team_id = team_id
+        self.season_id = season_id
+        self.team_name = team_name
+        self.logo_id = logo_id
+        self.file_name = file_name
+        self.team_logo = team_logo
+
+    @staticmethod
+    def from_dict(obj: Any) -> 'Team':
+        assert isinstance(obj, dict)
+        team_id = from_union([from_none, lambda x: int(from_str(x))], obj.get("team_id"))
+        season_id = from_union([from_none, lambda x: int(from_str(x))], obj.get("season_id"))
+        team_name = from_union([from_str, from_none], obj.get("team_name"))
+        logo_id = from_union([from_none, lambda x: int(from_str(x))], obj.get("logo_id"))
+        file_name = from_union([from_str, from_none], obj.get("file_name"))
+        team_logo = from_union([from_str, from_none], obj.get("team_logo"))
+        return Team(team_id, season_id, team_name, logo_id, file_name, team_logo)
+
+    def to_dict(self) -> dict:
+        result: dict = {}
+        result["team_id"] = from_union([lambda x: from_none((lambda x: is_type(type(None), x))(x)), lambda x: from_str((lambda x: str((lambda x: is_type(int, x))(x)))(x))], self.team_id)
+        result["season_id"] = from_union([lambda x: from_none((lambda x: is_type(type(None), x))(x)), lambda x: from_str((lambda x: str((lambda x: is_type(int, x))(x)))(x))], self.season_id)
+        result["team_name"] = from_union([from_str, from_none], self.team_name)
+        result["logo_id"] = from_union([lambda x: from_none((lambda x: is_type(type(None), x))(x)), lambda x: from_str((lambda x: str((lambda x: is_type(int, x))(x)))(x))], self.logo_id)
+        result["file_name"] = from_union([from_str, from_none], self.file_name)
+        result["team_logo"] = from_union([from_str, from_none], self.team_logo)
+        return result
+
+
 class Player:
     id: Optional[int]
     discord_id: Optional[str]
@@ -63,14 +101,16 @@ class Player:
     display_name: Optional[str]
     public_stream: Optional[str]
     streaming_from: Optional[str]
+    team: Optional[Team]
 
-    def __init__(self, id: Optional[int], discord_id: Optional[str], discord_tag: Optional[str], display_name: Optional[str], public_stream: Optional[str], streaming_from: Optional[str]) -> None:
+    def __init__(self, id: Optional[int], discord_id: Optional[str], discord_tag: Optional[str], display_name: Optional[str], public_stream: Optional[str], streaming_from: Optional[str], team: Optional[Team]) -> None:
         self.id = id
         self.discord_id = discord_id
         self.discord_tag = discord_tag
         self.display_name = display_name
         self.public_stream = public_stream
         self.streaming_from = streaming_from
+        self.team = team
 
     @staticmethod
     def from_dict(obj: Any) -> 'Player':
@@ -81,7 +121,8 @@ class Player:
         display_name = from_union([from_str, from_none], obj.get("displayName"))
         public_stream = from_union([from_str, from_none], obj.get("publicStream"))
         streaming_from = from_union([from_str, from_none], obj.get("streamingFrom"))
-        return Player(id, discord_id, discord_tag, display_name, public_stream, streaming_from)
+        team = from_union([Team.from_dict, from_none], obj.get("team"))
+        return Player(id, discord_id, discord_tag, display_name, public_stream, streaming_from, team)
 
     def to_dict(self) -> dict:
         result: dict = {}
@@ -91,6 +132,7 @@ class Player:
         result["displayName"] = from_union([from_str, from_none], self.display_name)
         result["publicStream"] = from_union([from_str, from_none], self.public_stream)
         result["streamingFrom"] = from_union([from_str, from_none], self.streaming_from)
+        result["team"] = from_union([lambda x: to_class(Team, x), from_none], self.team)
         return result
 
 

@@ -6,6 +6,7 @@ import clients.racetime_client as racetime_client
 from models.league import RestreamEpisode
 import clients.league_client as league_client
 from helpers.LogFormatter import LogFormatter
+from helpers.obs_context_manager import source_ar, data_ar
 
 import obspython as obs
 
@@ -20,6 +21,22 @@ class league_channels(str, Enum):
     channel2 = "thealttprleague2"
     channel3 = "thealttprleague3"
     channel4 = "thealttprleague4"
+
+class source_names(str, Enum):
+    left_player = "Left Name"
+    right_player = "Right Name"
+    topleft_player = "TL Name"
+    topright_player = "TR Name"
+    botleft_player = "BL Name"
+    botright_player = "BR Name"
+    left_team = "Left Team - 2P"
+    right_team = "Right Team - 2P"
+    comms = "Comm Names"
+    normal_tracker = "Normal Tracker"
+    keys_tracker = "Keysanity Tracker"
+    left_team_logo = "L Team Temp"
+    right_team_logo = "R Team Temp"
+
 
 curr_channel: str = league_channels.none
 curr_restream: RestreamEpisode = None
@@ -86,9 +103,35 @@ def new_channel_selected(props, prop, settings):
     print(curr_channel)
     if curr_channel is not league_channels.none:
         curr_restream = league_client.get_restream(curr_channel)
-        print(curr_restream.sg_data.players[0].display_name)
+        set_source_text(source_names.left_player, curr_restream.sg_data.players[0].display_name)
+        set_source_text(source_names.right_player, curr_restream.sg_data.players[1].display_name)
+        set_source_text(source_names.topleft_player, curr_restream.sg_data.players[0].display_name)
+        set_source_text(source_names.topright_player, curr_restream.sg_data.players[1].display_name)
+        set_source_text(source_names.botleft_player, curr_restream.sg_data.players[2].display_name)
+        set_source_text(source_names.botright_player, curr_restream.sg_data.players[3].display_name)
+        comms = curr_restream.sg_data.commentators[0].display_name
+        for i in range(1, len(curr_restream.sg_data.commentators)):
+            comms += f" & {curr_restream.sg_data.commentators[i].display_name}"
+        set_image_url(source_names.left_team_logo, curr_restream.sg_data.players[0].team.team_logo)
+        set_image_url(source_names.right_team_logo, curr_restream.sg_data.players[1].team.team_logo)
         if curr_restream is not None:
             obs.timer_add(update_sources, 100)
 
 def update_sources():
     pass
+
+
+def set_source_text(source_name: str, text: str):
+    if source_name is None or source_name == "":
+        return
+    with source_ar(source_name) as source, data_ar() as settings:
+        obs.obs_data_set_string(settings, "text", text)
+        obs.obs_source_update(source, settings)
+
+
+def set_image_url(source_name: str, url: str):
+    if source_name is None or source_name == "":
+        return
+    with source_ar(source_name) as source, data_ar() as settings:
+        obs.obs_data_set_string(settings, "file", url)
+        obs.obs_source_update(source, settings)
