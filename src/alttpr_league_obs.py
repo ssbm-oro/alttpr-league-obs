@@ -109,15 +109,6 @@ def new_channel_selected(props, prop, settings):
         set_source_text(source_names.topright_player, curr_restream.sg_data.players[1].display_name)
         set_source_text(source_names.botleft_player, curr_restream.sg_data.players[2].display_name)
         set_source_text(source_names.botright_player, curr_restream.sg_data.players[3].display_name)
-        
-        comms :str
-        if (len(curr_restream.sg_data.commentators) > 1):
-            comms = f"C:{curr_restream.sg_data.commentators[0].display_name}, {curr_restream.sg_data.commentators[1].display_name} T: {curr_restream.sg_data.trackers[0].display_name}"
-            
-        comms = curr_restream.sg_data.commentators[0].display_name
-        for i in range(1, len(curr_restream.sg_data.commentators)):
-            comms += f" & {curr_restream.sg_data.commentators[i].display_name}"
-        
         set_source_text(source_names.left_team, curr_restream.sg_data.players[0].team.team_name)
         set_source_text(source_names.right_team, curr_restream.sg_data.players[1].team.team_name)
         set_image_url(source_names.left_team_logo, curr_restream.sg_data.players[0].team.team_logo)
