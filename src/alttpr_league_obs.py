@@ -22,6 +22,8 @@ class league_channels(str, Enum):
     channel3 = "thealttprleague3"
     channel4 = "thealttprleague4"
 
+lc = league_channels
+
 class source_names(str, Enum):
     left_player = "Left Name"
     right_player = "Right Name"
@@ -36,6 +38,8 @@ class source_names(str, Enum):
     keys_tracker = "Keysanity Tracker"
     left_team_logo = "L Team Temp"
     right_team_logo = "R Team Temp"
+
+sn = source_names
 
 
 curr_channel: str = league_channels.none
@@ -61,6 +65,7 @@ def script_description():
 
 def script_load(settings):
     obs.obs_frontend_add_event_callback(on_load)
+    obs.obs_data_set_string(settings, sp.channel, lc.none)
 
 
 def on_load(event):
@@ -82,17 +87,17 @@ def script_properties():
         channel_list, new_channel_selected
     )
     obs.obs_property_list_add_string(
-        channel_list, league_channels.none, league_channels.none)
-    obs.obs_property_list_add_string(
-        channel_list, league_channels.channel1, league_channels.channel1)
-    obs.obs_property_list_add_string(
-        channel_list, league_channels.channel2, league_channels.channel2)
-    obs.obs_property_list_add_string(
-        channel_list, league_channels.channel3, league_channels.channel3)
-    obs.obs_property_list_add_string(
-        channel_list, league_channels.channel4, league_channels.channel4)
+        channel_list, lc.none, lc.none)
+    obs.obs_property_list_add_string(channel_list, lc.channel1, lc.channel1)
+    obs.obs_property_list_add_string(channel_list, lc.channel2, lc.channel2)
+    obs.obs_property_list_add_string(channel_list, lc.channel3, lc.channel3)
+    obs.obs_property_list_add_string(channel_list, lc.channel4, lc.channel4)
         
     return props
+
+
+def script_defaults(settings):
+    obs.obs_data_set_default_string(settings, sp.channel, lc.none)
 
 
 def new_channel_selected(props, prop, settings):
@@ -101,18 +106,21 @@ def new_channel_selected(props, prop, settings):
     obs.timer_remove(update_sources)
     curr_channel = obs.obs_data_get_string(settings, sp.channel)
     print(curr_channel)
-    if curr_channel is not league_channels.none:
+    if curr_channel != league_channels.none:
         curr_restream = league_client.get_restream(curr_channel)
-        set_source_text(source_names.left_player, curr_restream.sg_data.players[0].display_name)
-        set_source_text(source_names.right_player, curr_restream.sg_data.players[1].display_name)
-        set_source_text(source_names.topleft_player, curr_restream.sg_data.players[0].display_name)
-        set_source_text(source_names.topright_player, curr_restream.sg_data.players[1].display_name)
-        set_source_text(source_names.botleft_player, curr_restream.sg_data.players[2].display_name)
-        set_source_text(source_names.botright_player, curr_restream.sg_data.players[3].display_name)
-        set_source_text(source_names.left_team, curr_restream.sg_data.players[0].team.team_name)
-        set_source_text(source_names.right_team, curr_restream.sg_data.players[1].team.team_name)
-        set_image_url(source_names.left_team_logo, curr_restream.sg_data.players[0].team.team_logo)
-        set_image_url(source_names.right_team_logo, curr_restream.sg_data.players[1].team.team_logo)
+        if (curr_restream and curr_restream.sg_data):
+            players = curr_restream.sg_data.players
+            set_source_text(sn.left_player, players[0].display_name)
+            set_source_text(sn.right_player, players[1].display_name)
+            set_source_text(sn.topleft_player, players[0].display_name)
+            set_source_text(sn.topright_player, players[1].display_name)
+            if (len(players) > 2):
+                set_source_text(sn.botleft_player, players[2].display_name)
+                set_source_text(sn.botright_player, players[3].display_name)
+            set_source_text(sn.left_team, players[0].team.team_name)
+            set_source_text(sn.right_team, players[1].team.team_name)
+            set_image_url(sn.left_team_logo, players[0].team.team_logo)
+            set_image_url(sn.right_team_logo, players[1].team.team_logo)
         if curr_restream is not None:
             obs.timer_add(update_sources, 100)
 

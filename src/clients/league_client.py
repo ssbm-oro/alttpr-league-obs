@@ -23,6 +23,6 @@ def league_get(uri: str, payload={}):
         return None
 
 def get_restream(channel: str):
-    print(f'{base_url}restream/{channel}')
-    print(league_get(f'{base_url}restream?channel={channel}'))
-    return episode_from_dict(league_get(f'{base_url}restream?channel={channel}'))
+    return episode_from_dict(
+        league_get(f'{base_url}restream?channel={channel}')
+    )
