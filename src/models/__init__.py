@@ -25,6 +25,8 @@ def from_bool(x: Any) -> bool:
 def from_int(x: Any) -> int:
     if x is None:
         return
+    if isinstance(x, str):
+        x = int(x)
     assert isinstance(x, int) and not isinstance(x, bool)
     return x
 
@@ -71,7 +73,7 @@ def from_union(fs, x):
             return f(x)
         except:
             pass
-    #assert False
+#    assert False
 
 
 def is_type(t: Type[T], x: Any) -> T:

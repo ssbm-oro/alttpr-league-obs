@@ -6,7 +6,7 @@ import clients.racetime_client as racetime_client
 from models.league import RestreamEpisode
 import clients.league_client as league_client
 from helpers.LogFormatter import LogFormatter
-from helpers.obs_context_manager import source_ar, data_ar
+from helpers.obs_context_manager import scene_ar, source_ar, data_ar
 
 import obspython as obs
 
@@ -38,6 +38,25 @@ class source_names(str, Enum):
     keys_tracker = "Keysanity Tracker"
     left_team_logo = "L Team Temp"
     right_team_logo = "R Team Temp"
+    left_tracker = "Left 1"
+    right_tracker = "Right 1"
+    topleft_tracker = "TL-1"
+    topright_tracker = "TR-1"
+    botleft_tracker = "BL-1"
+    botright_tracker = "BR-1"
+
+
+class scene_names(str, Enum):
+    intro = "Intro"
+    two_player = "2P"
+    four_player = "4P"
+    outro = "Outro"
+
+tracker_url = (
+    "https://lttp-tracker-tournament-only.firebaseapp.com/"
+    "{tracker_prefix}{side}?password={password}&keysanity={keysanity}"
+    "&layout={layout}"
+)
 
 sn = source_names
 
@@ -119,8 +138,26 @@ def new_channel_selected(props, prop, settings):
                 set_source_text(sn.botright_player, players[3].display_name)
             set_source_text(sn.left_team, players[0].team.team_name)
             set_source_text(sn.right_team, players[1].team.team_name)
-            set_image_url(sn.left_team_logo, players[0].team.team_logo)
-            set_image_url(sn.right_team_logo, players[1].team.team_logo)
+            set_source_file(sn.left_team_logo, players[0].team.team_logo)
+            set_source_file(sn.right_team_logo, players[1].team.team_logo)
+
+            keys = curr_restream.keysanity == 1
+            print(f"keysanity = {curr_restream.keysanity}")
+
+            left_tracker_url = str.format(
+                tracker_url, tracker_prefix=curr_restream.tracker_prefix,
+                side="left", password="league1",
+                keysanity=keys, layout="2"
+            )
+            print(left_tracker_url)
+            set_source_url(sn.left_tracker, left_tracker_url)
+            right_tracker_url = str.format(
+                tracker_url, tracker_prefix=curr_restream.tracker_prefix,
+                side="right", password="league1",
+                keysanity=keys, layout="2"
+            )
+            print(right_tracker_url)
+            set_source_url(sn.right_tracker, right_tracker_url)
         if curr_restream is not None:
             obs.timer_add(update_sources, 100)
 
@@ -136,9 +173,25 @@ def set_source_text(source_name: str, text: str):
         obs.obs_source_update(source, settings)
 
 
-def set_image_url(source_name: str, url: str):
+def set_source_file(source_name: str, url: str):
     if source_name is None or source_name == "":
         return
     with source_ar(source_name) as source, data_ar() as settings:
         obs.obs_data_set_string(settings, "file", url)
         obs.obs_source_update(source, settings)
+
+def set_source_url(source_name: str, url: str):
+    if source_name is None or source_name == "":
+        return
+    with source_ar(source_name) as source, data_ar() as settings:
+        obs.obs_data_set_string(settings, "url", url)
+        obs.obs_source_update(source, settings)
+
+
+def set_source_visibility(scene_name: str, source_name: str, vis: bool):
+    if (scene_name is None or scene_name == "" or
+        source_name is None or source_name == ""):
+        return
+    with scene_ar(scene_name) as scene, data_ar() as settings:
+        source = obs.obs_scene_find_source(scene, source_name)
+        obs.obs_sceneitem_set_visible(source, vis)
