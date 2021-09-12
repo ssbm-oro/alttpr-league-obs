@@ -6,6 +6,46 @@ from models import (
 )
 
 
+class CropSettings:
+    game_top: int
+    game_left: int
+    game_right: int
+    game_bottom: int
+    timer_top: int
+    timer_left: int
+    timer_right: int
+    timer_bottom: int
+
+    @staticmethod
+    def from_dict(obj: Any) -> 'CropSettings':
+        assert isinstance(obj, dict)
+        game_top = from_int(obj.get("game_top"))
+        game_left = from_int(obj.get("game_left"))
+        game_right = from_int(obj.get("game_right"))
+        game_bottom = from_int(obj.get("game_bottom"))
+        timer_top = from_int(obj.get("timer_top"))
+        timer_left = from_int(obj.get("timer_left"))
+        timer_right = from_int(obj.get("timer_right"))
+        timer_bottom = from_int(obj.get("timer_bottom"))
+        return CropSettings(
+            game_top=game_top, game_left=game_left, game_right=game_right,
+            game_bottom=game_bottom, timer_top=timer_top,
+            timer_left=timer_left, timer_right=timer_right,
+            timer_bottom=timer_bottom
+        )
+
+    def to_dict(self) -> dict:
+        result: dict = {}
+        result["game_top"] = self.game_top
+        result["game_left"] = self.game_left
+        result["game_right"] = self.game_right
+        result["game_bottom"] = self.game_bottom
+        result["timer_top"] = self.timer_top
+        result["timer_left"] = self.timer_left
+        result["timer_right"] = self.timer_right
+        result["timer_bottom"] = self.timer_bottom
+        return result
+
 class Crew:
     id: Optional[int]
     ready: Optional[bool]
@@ -105,12 +145,13 @@ class Player:
     public_stream: Optional[str]
     streaming_from: Optional[str]
     team: Optional[Team]
+    crop: Optional[CropSettings]
 
     def __init__(
         self, id: Optional[int], discord_id: Optional[str],
         discord_tag: Optional[str], display_name: Optional[str],
         public_stream: Optional[str], streaming_from: Optional[str],
-        team: Optional[Team]
+        team: Optional[Team], crop: Optional[CropSettings]
     ) -> None:
         self.id = id
         self.discord_id = discord_id
@@ -119,6 +160,7 @@ class Player:
         self.public_stream = public_stream
         self.streaming_from = streaming_from
         self.team = team
+        self.crop = crop
 
     @staticmethod
     def from_dict(obj: Any) -> 'Player':
@@ -136,9 +178,10 @@ class Player:
             [from_str, from_none], obj.get("streamingFrom")
         )
         team = from_union([Team.from_dict, from_none], obj.get("team"))
+        crop = from_union([CropSettings.from_dict, from_none], obj.get("crop"))
         return Player(
             id, discord_id, discord_tag, display_name, public_stream,
-            streaming_from, team
+            streaming_from, team, crop
         )
 
 

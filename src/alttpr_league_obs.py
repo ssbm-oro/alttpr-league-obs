@@ -142,7 +142,6 @@ def new_channel_selected(props, prop, settings):
             set_source_file(sn.right_team_logo, players[1].team.team_logo)
 
             keys = curr_restream.keysanity == 1
-            print(f"keysanity = {curr_restream.keysanity}")
 
             left_tracker_url = str.format(
                 tracker_url, tracker_prefix=curr_restream.tracker_prefix,
