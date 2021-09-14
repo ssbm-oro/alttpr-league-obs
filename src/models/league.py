@@ -138,50 +138,68 @@ class Team:
 
 
 class Player:
-    id: Optional[int]
-    discord_id: Optional[str]
-    discord_tag: Optional[str]
-    display_name: Optional[str]
-    public_stream: Optional[str]
-    streaming_from: Optional[str]
+    logo_id: Optional[int]
+    player_id: Optional[int]
+    player_name: Optional[str]
+    discord_name: Optional[str]
+    discord_id: Optional[float]
+    rtgg_name: Optional[str]
+    rtgg_id: Optional[str]
+    twitch_id: Optional[int]
+    twitch_name: Optional[str]
+    twitch_url: Optional[str]
+    sprite_id: Optional[int]
+    file_name: Optional[str]
+    player_logo: Optional[str]
     team: Optional[Team]
-    crop: Optional[CropSettings]
+    crop: None
 
-    def __init__(
-        self, id: Optional[int], discord_id: Optional[str],
-        discord_tag: Optional[str], display_name: Optional[str],
-        public_stream: Optional[str], streaming_from: Optional[str],
-        team: Optional[Team], crop: Optional[CropSettings]
-    ) -> None:
-        self.id = id
+    def __init__(self, logo_id: Optional[int], player_id: Optional[int],
+            player_name: Optional[str], discord_name: Optional[str],
+            discord_id: Optional[int], rtgg_name: Optional[str],
+            rtgg_id: Optional[str], twitch_id: Optional[int],
+            twitch_name: Optional[str], twitch_url: Optional[str],
+            sprite_id: Optional[int], file_name: Optional[str],
+            player_logo: Optional[str], team: Optional[Team], crop: None
+        ) -> None:
+        self.logo_id = logo_id
+        self.player_id = player_id
+        self.player_name = player_name
+        self.discord_name = discord_name
         self.discord_id = discord_id
-        self.discord_tag = discord_tag
-        self.display_name = display_name
-        self.public_stream = public_stream
-        self.streaming_from = streaming_from
+        self.rtgg_name = rtgg_name
+        self.rtgg_id = rtgg_id
+        self.twitch_id = twitch_id
+        self.twitch_name = twitch_name
+        self.twitch_url = twitch_url
+        self.sprite_id = sprite_id
+        self.file_name = file_name
+        self.player_logo = player_logo
         self.team = team
         self.crop = crop
 
     @staticmethod
     def from_dict(obj: Any) -> 'Player':
         assert isinstance(obj, dict)
-        id = from_union([from_int, from_none], obj.get("id"))
-        discord_id = from_union([from_str, from_none], obj.get("discordId"))
-        discord_tag = from_union([from_str, from_none], obj.get("discordTag"))
-        display_name = from_union(
-            [from_str, from_none], obj.get("displayName")
-        )
-        public_stream = from_union(
-            [from_str, from_none], obj.get("publicStream")
-        )
-        streaming_from = from_union(
-            [from_str, from_none], obj.get("streamingFrom")
-        )
+        logo_id = from_union([from_int, from_none], obj.get("logo_id"))
+        player_id = from_union([from_int, from_none], obj.get("player_id"))
+        player_name = from_union([from_str, from_none], obj.get("player_name"))
+        discord_name = from_union([from_str, from_none], obj.get("discord_name"))
+        discord_id = from_union([from_int, from_none], obj.get("discord_id"))
+        rtgg_name = from_union([from_str, from_none], obj.get("rtgg_name"))
+        rtgg_id = from_union([from_str, from_none], obj.get("rtgg_id"))
+        twitch_id = from_union([from_int, from_none], obj.get("twitch_id"))
+        twitch_name = from_union([from_str, from_none], obj.get("twitch_name"))
+        twitch_url = from_union([from_str, from_none], obj.get("twitch_url"))
+        sprite_id = from_union([from_int, from_none], obj.get("sprite_id"))
+        file_name = from_union([from_str, from_none], obj.get("file_name"))
+        player_logo = from_union([from_str, from_none], obj.get("player_logo"))
         team = from_union([Team.from_dict, from_none], obj.get("team"))
-        crop = from_union([CropSettings.from_dict, from_none], obj.get("crop"))
+        crop = from_none(obj.get("crop"))
         return Player(
-            id, discord_id, discord_tag, display_name, public_stream,
-            streaming_from, team, crop
+            logo_id, player_id, player_name, discord_name, discord_id,
+            rtgg_name, rtgg_id, twitch_id, twitch_name, twitch_url, sprite_id,
+            file_name, player_logo, team, crop
         )
 
 

@@ -9,6 +9,8 @@ def script_path():
 
 base_url = "https://alttprleague.com/api/"
 
+api_secret = "xxAPISECRETxx"
+
 def league_get(uri: str, payload={}):
     headers = {
         'User-Agent': "oro-obs-bot_alpha"

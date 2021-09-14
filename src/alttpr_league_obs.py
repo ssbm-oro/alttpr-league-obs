@@ -2,6 +2,7 @@ import asyncio
 import logging
 from threading import Thread
 from enum import Enum, auto
+import subprocess
 import clients.racetime_client as racetime_client
 from models.league import RestreamEpisode
 import clients.league_client as league_client
@@ -9,7 +10,6 @@ from helpers.LogFormatter import LogFormatter
 from helpers.obs_context_manager import scene_ar, source_ar, data_ar
 
 import obspython as obs
-
 class script_props(str, Enum):
     channel = auto()
 
@@ -60,7 +60,6 @@ tracker_url = (
 
 sn = source_names
 
-
 curr_channel: str = league_channels.none
 curr_restream: RestreamEpisode = None
 logger = logging.Logger("alttpr-ladder-obs")
@@ -70,6 +69,7 @@ handler = logging.StreamHandler()
 handler.setFormatter(LogFormatter())
 logger.disabled = False
 logger.info("started")
+streams = []
 
 
 def script_description():
@@ -90,6 +90,9 @@ def script_load(settings):
 def on_load(event):
     if event == obs.OBS_FRONTEND_EVENT_FINISHED_LOADING:
         pass
+    if event == obs.OBS_FRONTEND_EVENT_EXIT:
+        for stream in streams:
+            stream.kill()
 
 
 def script_update(settings):
@@ -129,13 +132,18 @@ def new_channel_selected(props, prop, settings):
         curr_restream = league_client.get_restream(curr_channel)
         if (curr_restream and curr_restream.sg_data):
             players = curr_restream.sg_data.players
-            set_source_text(sn.left_player, players[0].display_name)
-            set_source_text(sn.right_player, players[1].display_name)
-            set_source_text(sn.topleft_player, players[0].display_name)
-            set_source_text(sn.topright_player, players[1].display_name)
+            set_source_text(sn.left_player, players[0].player_name)
+            global streams
+            streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[0].twitch_url}", 27770)))
+            set_source_text(sn.right_player, players[1].player_name)
+            streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[1].twitch_url}", 27771)))
+            set_source_text(sn.topleft_player, players[0].player_name)
+            set_source_text(sn.topright_player, players[1].player_name)
             if (len(players) > 2):
-                set_source_text(sn.botleft_player, players[2].display_name)
-                set_source_text(sn.botright_player, players[3].display_name)
+                set_source_text(sn.botleft_player, players[2].player_name)
+                streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[2].twitch_url}", 27772)))
+                set_source_text(sn.botright_player, players[3].player_name)
+                streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[3].twitch_url}", 27773)))
             set_source_text(sn.left_team, players[0].team.team_name)
             set_source_text(sn.right_team, players[1].team.team_name)
             set_source_file(sn.left_team_logo, players[0].team.team_logo)
@@ -194,3 +202,9 @@ def set_source_visibility(scene_name: str, source_name: str, vis: bool):
     with scene_ar(scene_name) as scene, data_ar() as settings:
         source = obs.obs_scene_find_source(scene, source_name)
         obs.obs_sceneitem_set_visible(source, vis)
+
+
+def get_streamlink_command(twitch_url: str, port: int):
+    return ["/Library/Frameworks/Python.framework/Versions/3.7/bin/streamlink",
+        twitch_url, "720p", "--player-external-http",
+        "--player-external-http-port", str(port), "--twitch-disable-ads"]
