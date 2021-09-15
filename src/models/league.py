@@ -252,6 +252,7 @@ class RestreamEpisode:
     twitch_id: None
     twitch_access: None
     twitch_refresh: None
+    twitch_stream_key : Optional[str]
     sg_data: Optional[SgData]
     last_update: Optional[datetime]
 
@@ -259,7 +260,8 @@ class RestreamEpisode:
         self, sg_id: Optional[int], channel: Optional[str],
         tracker_prefix: Optional[str], keysanity: Optional[int],
         twitch_id: None, twitch_access: None, twitch_refresh: None,
-        sg_data: Optional[SgData], last_update: Optional[datetime]
+        twitch_stream_key: Optional[str], sg_data: Optional[SgData],
+        last_update: Optional[datetime]
     ) -> None:
         self.sg_id = sg_id
         self.channel = channel
@@ -268,6 +270,7 @@ class RestreamEpisode:
         self.twitch_id = twitch_id
         self.twitch_access = twitch_access
         self.twitch_refresh = twitch_refresh
+        self.twitch_stream_key = twitch_stream_key
         self.sg_data = sg_data
         self.last_update = last_update
 
@@ -283,13 +286,17 @@ class RestreamEpisode:
         twitch_id = from_none(obj.get("twitch_id"))
         twitch_access = from_none(obj.get("twitch_access"))
         twitch_refresh = from_none(obj.get("twitch_refresh"))
+        twitch_stream_key = (
+            from_union([from_str, from_none], obj.get("twitch_stream_key"))
+        )
         sg_data = from_union([from_none, SgData.from_dict], obj.get("sg_data"))
         last_update = from_union(
             [from_datetime, from_none], obj.get("last_update")
         )
         return RestreamEpisode(
             sg_id, channel, tracker_prefix, keysanity, twitch_id,
-            twitch_access, twitch_refresh, sg_data, last_update
+            twitch_access, twitch_refresh, twitch_stream_key, sg_data,
+            last_update
         )
 
 

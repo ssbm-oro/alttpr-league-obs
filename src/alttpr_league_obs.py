@@ -131,6 +131,7 @@ def new_channel_selected(props, prop, settings):
     if curr_channel != league_channels.none:
         curr_restream = league_client.get_restream(curr_channel)
         if (curr_restream and curr_restream.sg_data):
+            set_stream_key(curr_restream.twitch_stream_key)
             players = curr_restream.sg_data.players
             set_source_text(sn.left_player, players[0].player_name)
             global streams
@@ -208,3 +209,14 @@ def get_streamlink_command(twitch_url: str, port: int):
     return ["/Library/Frameworks/Python.framework/Versions/3.7/bin/streamlink",
         twitch_url, "720p", "--player-external-http",
         "--player-external-http-port", str(port), "--twitch-disable-ads"]
+
+
+def set_stream_key(stream_key: str):
+    service = obs.obs_frontend_get_streaming_service()
+    if (service is None):
+        return
+    settings = obs.obs_service_get_settings(service);
+    obs.obs_data_set_string(settings, "key", stream_key);
+    obs.obs_service_update(service, settings);
+    obs.obs_data_release(settings);
+    obs.obs_frontend_save_streaming_service();
