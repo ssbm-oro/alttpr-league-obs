@@ -101,18 +101,21 @@ class Team:
     team_name: Optional[str]
     logo_id: Optional[int]
     file_name: Optional[str]
+    points: Optional[int]
     team_logo: Optional[str]
 
     def __init__(
         self, team_id: Optional[int], season_id: Optional[int],
         team_name: Optional[str], logo_id: Optional[int],
-        file_name: Optional[str], team_logo: Optional[str]
+        file_name: Optional[str], points: Optional[int],
+        team_logo: Optional[str]
     ) -> None:
         self.team_id = team_id
         self.season_id = season_id
         self.team_name = team_name
         self.logo_id = logo_id
         self.file_name = file_name
+        self.points = points
         self.team_logo = team_logo
 
     @staticmethod
@@ -131,9 +134,11 @@ class Team:
             [from_none, lambda x: int(from_str(x))], obj.get("logo_id")
         )
         file_name = from_union([from_str, from_none], obj.get("file_name"))
+        points = from_union([from_int, from_none], obj.get("points"))
         team_logo = from_union([from_str, from_none], obj.get("team_logo"))
         return Team(
-            team_id, season_id, team_name, logo_id, file_name, team_logo
+            team_id, season_id, team_name, logo_id, file_name, points,
+            team_logo
         )
 
 

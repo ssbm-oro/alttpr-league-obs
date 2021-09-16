@@ -91,8 +91,7 @@ def on_load(event):
     if event == obs.OBS_FRONTEND_EVENT_FINISHED_LOADING:
         pass
     if event == obs.OBS_FRONTEND_EVENT_EXIT:
-        for stream in streams:
-            stream.kill()
+        close_streams()
 
 
 def script_update(settings):
@@ -125,13 +124,15 @@ def script_defaults(settings):
 def new_channel_selected(props, prop, settings):
     global curr_restream
     global curr_channel
+    close_streams()
     obs.timer_remove(update_sources)
     curr_channel = obs.obs_data_get_string(settings, sp.channel)
     print(curr_channel)
     if curr_channel != league_channels.none:
         curr_restream = league_client.get_restream(curr_channel)
         if (curr_restream and curr_restream.sg_data):
-            set_stream_key(curr_restream.twitch_stream_key)
+            if curr_restream.twitch_stream_key:
+                set_stream_key(curr_restream.twitch_stream_key)
             players = curr_restream.sg_data.players
             set_source_text(sn.left_player, players[0].player_name)
             global streams
@@ -145,10 +146,14 @@ def new_channel_selected(props, prop, settings):
                 streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[2].twitch_url}", 27772)))
                 set_source_text(sn.botright_player, players[3].player_name)
                 streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[3].twitch_url}", 27773)))
-            set_source_text(sn.left_team, players[0].team.team_name)
-            set_source_text(sn.right_team, players[1].team.team_name)
-            set_source_file(sn.left_team_logo, players[0].team.team_logo)
-            set_source_file(sn.right_team_logo, players[1].team.team_logo)
+            l_team = players[0].team
+            r_team = players[1].team
+            set_source_text(sn.left_team,
+                f"{l_team.team_name} - {l_team.points}")
+            set_source_text(sn.right_team,
+                f"{r_team.team_name} - {r_team.points}")
+            set_source_file(sn.left_team_logo, l_team.team_logo)
+            set_source_file(sn.right_team_logo, r_team.team_logo)
 
             keys = curr_restream.keysanity == 1
 
@@ -210,13 +215,17 @@ def get_streamlink_command(twitch_url: str, port: int):
         twitch_url, "720p", "--player-external-http",
         "--player-external-http-port", str(port), "--twitch-disable-ads"]
 
+def close_streams():
+    for stream in streams:
+            stream.kill()
+
 
 def set_stream_key(stream_key: str):
     service = obs.obs_frontend_get_streaming_service()
     if (service is None):
         return
-    settings = obs.obs_service_get_settings(service);
-    obs.obs_data_set_string(settings, "key", stream_key);
-    obs.obs_service_update(service, settings);
-    obs.obs_data_release(settings);
-    obs.obs_frontend_save_streaming_service();
+    with obs.obs_service_get_settings(service) as settings:
+        obs.obs_data_set_string(settings, "key", stream_key)
+        obs.obs_service_update(service, settings)
+        obs.obs_data_release(settings)
+    obs.obs_frontend_save_streaming_service()
