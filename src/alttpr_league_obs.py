@@ -218,6 +218,7 @@ def get_streamlink_command(twitch_url: str, port: int):
 def close_streams():
     for stream in streams:
             stream.kill()
+            streams.remove(stream)
 
 
 def set_stream_key(stream_key: str):
