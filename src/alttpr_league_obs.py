@@ -3,8 +3,9 @@ import logging
 from threading import Thread
 from enum import Enum, auto
 import subprocess
+from typing import List
 import clients.racetime_client as racetime_client
-from models.league import RestreamEpisode
+from models.league import Player, RestreamEpisode
 import clients.league_client as league_client
 from helpers.LogFormatter import LogFormatter
 from helpers.obs_context_manager import scene_ar, source_ar, data_ar
@@ -12,6 +13,12 @@ from helpers.obs_context_manager import scene_ar, source_ar, data_ar
 import obspython as obs
 class script_props(str, Enum):
     channel = auto()
+    refresh_crew_button = auto()
+    restart_p1_button = auto()
+    restart_p2_button = auto()
+    restart_p3_button = auto()
+    restart_p4_button = auto()
+
 
 sp = script_props
 
@@ -33,7 +40,8 @@ class source_names(str, Enum):
     botright_player = "BR Name"
     left_team = "Left Team - 2P"
     right_team = "Right Team - 2P"
-    comms = "Comm Names"
+    crew = "Comm Names"
+    crew4p = "Comm Names 4P"
     normal_tracker = "Normal Tracker"
     keys_tracker = "Keysanity Tracker"
     left_team_logo = "L Team Temp"
@@ -70,6 +78,12 @@ handler.setFormatter(LogFormatter())
 logger.disabled = False
 logger.info("started")
 streams = []
+channel_list = None
+refresh_crew_button = None
+restart_p1_button = None
+restart_p2_button = None
+restart_p3_button = None
+restart_p4_button = None
 
 
 def script_description():
@@ -92,6 +106,22 @@ def on_load(event):
         pass
     if event == obs.OBS_FRONTEND_EVENT_EXIT:
         close_streams()
+    if event == obs.OBS_FRONTEND_EVENT_STREAMING_STARTING:
+        if channel_list:
+            obs.obs_property_set_enabled(channel_list, False)
+        pass
+    if event == obs.OBS_FRONTEND_EVENT_STREAMING_STARTED:
+        if (refresh_crew_button):
+            obs.obs_property_set_enabled(refresh_crew_button, True)
+        pass
+    if event == obs.OBS_FRONTEND_EVENT_STREAMING_STOPPING:
+        if (refresh_crew_button):
+            obs.obs_property_set_enabled(refresh_crew_button, False)
+        pass
+    if event == obs.OBS_FRONTEND_EVENT_STREAMING_STOPPED:
+        if channel_list:
+            obs.obs_property_set_enabled(channel_list, True)
+        pass
 
 
 def script_update(settings):
@@ -100,6 +130,7 @@ def script_update(settings):
 
 def script_properties():
     props = obs.obs_properties_create()
+    global channel_list
     channel_list = obs.obs_properties_add_list(
         props, sp.channel, "Channel",
         obs.OBS_COMBO_TYPE_LIST, obs.OBS_COMBO_FORMAT_STRING
@@ -113,9 +144,71 @@ def script_properties():
     obs.obs_property_list_add_string(channel_list, lc.channel2, lc.channel2)
     obs.obs_property_list_add_string(channel_list, lc.channel3, lc.channel3)
     obs.obs_property_list_add_string(channel_list, lc.channel4, lc.channel4)
+
+    global refresh_crew_button
+    refresh_crew_button = obs.obs_properties_add_button(
+        props, sp.refresh_crew_button, "Refresh Crew", lambda *props: None)
+    obs.obs_property_set_modified_callback(
+        refresh_crew_button, refresh_crew_pressed)
+    obs.obs_property_set_enabled(refresh_crew_button, False)
+
+    global restart_p1_button
+    global restart_p2_button
+    global restart_p3_button
+    global restart_p4_button
+
+    restart_p1_button = obs.obs_properties_add_button(
+        props, sp.restart_p1_button, "Restart Left/TopLeft Stream", lambda *props: None)
+    obs.obs_property_set_modified_callback(
+        restart_p1_button, restart_p1_pressed)
+    obs.obs_property_set_enabled(restart_p1_button, False)
+
+    restart_p2_button = obs.obs_properties_add_button(
+        props, sp.restart_p2_button, "Restart Right/TopRight Stream", lambda *props: None)
+    obs.obs_property_set_modified_callback(
+        restart_p2_button, restart_p2_pressed)
+    obs.obs_property_set_enabled(restart_p2_button, False)
+
+    restart_p3_button = obs.obs_properties_add_button(
+        props, sp.restart_p3_button, "Restart BottomLeft Stream", lambda *props: None)
+    obs.obs_property_set_modified_callback(
+        restart_p3_button, restart_p3_pressed)
+    obs.obs_property_set_enabled(restart_p3_button, False)
+
+    restart_p4_button = obs.obs_properties_add_button(
+        props, sp.restart_p4_button, "Restart BottomRight Stream", lambda *props: None)
+    obs.obs_property_set_modified_callback(
+        restart_p4_button, restart_p4_pressed)
+    obs.obs_property_set_enabled(restart_p4_button, False)
         
     return props
 
+def restart_p1_pressed(props, prop, *arg, **kwargs):
+    restart_stream(curr_restream.sg_data.players, 0)
+
+def restart_p2_pressed(props, prop, *arg, **kwargs):
+    restart_stream(curr_restream.sg_data.players, 1)
+
+def restart_p3_pressed(props, prop, *arg, **kwargs):
+    restart_stream(curr_restream.sg_data.players, 2)
+
+def restart_p4_pressed(props, prop, *arg, **kwargs):
+    restart_stream(curr_restream.sg_data.players, 3)
+
+def restart_stream(players: List[Player], index: int):
+    if len(streams) > index:
+        if streams[index]:
+            streams[index].kill()
+        streams[index] = subprocess.Popen(
+            get_streamlink_command(players, index)
+        )
+
+
+def refresh_crew_pressed(props, prop, *arg, **kwargs):
+    if curr_channel != league_channels.none:
+        curr_restream = league_client.get_restream(curr_channel)
+        if (curr_restream and curr_restream.sg_data):
+            update_crew(curr_restream)
 
 def script_defaults(settings):
     obs.obs_data_set_default_string(settings, sp.channel, lc.none)
@@ -134,45 +227,87 @@ def new_channel_selected(props, prop, settings):
             if curr_restream.twitch_stream_key:
                 set_stream_key(curr_restream.twitch_stream_key)
             players = curr_restream.sg_data.players
-            set_source_text(sn.left_player, players[0].player_name)
-            global streams
-            streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[0].twitch_url}", 27770)))
-            set_source_text(sn.right_player, players[1].player_name)
-            streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[1].twitch_url}", 27771)))
-            set_source_text(sn.topleft_player, players[0].player_name)
-            set_source_text(sn.topright_player, players[1].player_name)
-            if (len(players) > 2):
-                set_source_text(sn.botleft_player, players[2].player_name)
-                streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[2].twitch_url}", 27772)))
-                set_source_text(sn.botright_player, players[3].player_name)
-                streams.append(subprocess.Popen(get_streamlink_command(f"https://twitch.tv/{players[3].twitch_url}", 27773)))
-            l_team = players[0].team
-            r_team = players[1].team
-            set_source_text(sn.left_team,
-                f"{l_team.team_name} - {l_team.points}")
-            set_source_text(sn.right_team,
-                f"{r_team.team_name} - {r_team.points}")
-            set_source_file(sn.left_team_logo, l_team.team_logo)
-            set_source_file(sn.right_team_logo, r_team.team_logo)
 
-            keys = curr_restream.keysanity == 1
+            update_players(players, True)
+            update_teams(players)
+            update_trackers(curr_restream)
+            update_crew(curr_restream)
 
-            left_tracker_url = str.format(
-                tracker_url, tracker_prefix=curr_restream.tracker_prefix,
+        if curr_restream is not None:
+            obs.timer_add(update_sources, 100)
+
+    return True
+
+def update_players(players: List[Player], start_streams: bool = False):
+    global streams
+
+    global restart_p1_button
+    global restart_p2_button
+    global restart_p3_button
+    global restart_p4_button
+
+    set_source_text(sn.left_player, players[0].player_name)
+    set_source_text(sn.right_player, players[1].player_name)
+    if start_streams:
+        streams.append(subprocess.Popen(get_streamlink_command(players, 0)))
+        obs.obs_property_set_enabled(restart_p1_button, True)
+        streams.append(subprocess.Popen(get_streamlink_command(players, 1)))
+        obs.obs_property_set_enabled(restart_p2_button, True)
+    set_source_text(sn.topleft_player, players[0].player_name)
+    set_source_text(sn.topright_player, players[1].player_name)
+    if (len(players) > 2):
+        set_source_text(sn.botleft_player, players[2].player_name)
+        set_source_text(sn.botright_player, players[3].player_name)
+        if start_streams:
+            streams.append(subprocess.Popen(get_streamlink_command(players, 2)))
+            obs.obs_property_set_enabled(restart_p3_button, True)
+            streams.append(subprocess.Popen(get_streamlink_command(players, 3)))
+            obs.obs_property_set_enabled(restart_p4_button, True)
+
+def update_trackers(restream: RestreamEpisode):
+    keys = restream.keysanity == 1
+
+    left_tracker_url = str.format(
+                tracker_url, tracker_prefix=restream.tracker_prefix,
                 side="left", password="league1",
                 keysanity=keys, layout="2"
             )
-            print(left_tracker_url)
-            set_source_url(sn.left_tracker, left_tracker_url)
-            right_tracker_url = str.format(
-                tracker_url, tracker_prefix=curr_restream.tracker_prefix,
+    print(left_tracker_url)
+    set_source_url(sn.left_tracker, left_tracker_url)
+    right_tracker_url = str.format(
+                tracker_url, tracker_prefix=restream.tracker_prefix,
                 side="right", password="league1",
                 keysanity=keys, layout="2"
             )
-            print(right_tracker_url)
-            set_source_url(sn.right_tracker, right_tracker_url)
-        if curr_restream is not None:
-            obs.timer_add(update_sources, 100)
+    print(right_tracker_url)
+    set_source_url(sn.right_tracker, right_tracker_url)
+
+def update_teams(players):
+    l_team = players[0].team
+    r_team = players[1].team
+    set_source_text(sn.left_team, f"{l_team.team_name} - {l_team.points}")
+    set_source_text(sn.right_team, f"{r_team.team_name} - {r_team.points}")
+    set_source_file(sn.left_team_logo, l_team.team_logo)
+    set_source_file(sn.right_team_logo, r_team.team_logo)
+
+def update_crew(restream: RestreamEpisode):
+    comms = "C: "
+    for comm in restream.sg_data.commentators[:-1]:
+        print(comm)
+        comms += f"{comm.display_name}, "
+    if len(restream.sg_data.commentators) > 0:
+        comms += f"{restream.sg_data.commentators[-1].display_name}"
+
+    trackers = "T: "
+    for tracker in restream.sg_data.trackers[:-1]:
+        trackers += f"{tracker.display_name}, "
+    if len(restream.sg_data.trackers) > 0:
+        trackers += f"{restream.sg_data.trackers[-1].display_name}"
+
+    set_source_text(sn.crew, f"{comms} {trackers}")
+    print(f"{comms} {trackers}")
+    set_source_text(sn.crew4p, f"{comms}\n{trackers}")
+    print(f"{comms}\n{trackers}")
 
 def update_sources():
     pass
@@ -210,10 +345,12 @@ def set_source_visibility(scene_name: str, source_name: str, vis: bool):
         obs.obs_sceneitem_set_visible(source, vis)
 
 
-def get_streamlink_command(twitch_url: str, port: int):
+def get_streamlink_command(players: List[Player], i: int):
+    port = 27770 + i
     return ["/Library/Frameworks/Python.framework/Versions/3.7/bin/streamlink",
-        twitch_url, "720p", "--player-external-http",
-        "--player-external-http-port", str(port), "--twitch-disable-ads"]
+        f"https://twitch.tv/{players[i].twitch_url}", "720p",
+        "--player-external-http", "--player-external-http-port", str(port),
+        "--twitch-disable-ads"]
 
 def close_streams():
     for stream in streams:

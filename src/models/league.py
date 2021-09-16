@@ -84,7 +84,7 @@ class Crew:
         discord_id = from_union([from_str, from_none], obj.get("discordId"))
         discord_tag = from_union([from_str, from_none], obj.get("discordTag"))
         display_name = from_union(
-            [from_str, from_none], obj.get("displayName")
+            [from_str, from_none], obj.get("display_name")
         )
         public_stream = from_union(
             [from_str, from_none], obj.get("publicStream")
