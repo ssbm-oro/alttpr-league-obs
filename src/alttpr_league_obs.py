@@ -62,7 +62,7 @@ sn = source_names
 
 curr_channel: str = league_channels.none
 curr_restream: RestreamEpisode = None
-logger = logging.Logger("alttpr-ladder-obs")
+logger = logging.Logger("alttpr-league-obs")
 logger.setLevel(logging.INFO)
 logger.handlers.clear()
 handler = logging.StreamHandler()
@@ -77,7 +77,7 @@ def script_description():
         "Select which channel you are broadcasting to load all pertinent data."
     )
     return (
-        "<center>alttpr-ladder-obs xxVERSIONxx<hr>"
+        "<center>alttpr-league-obs xxVERSIONxx<hr>"
         "<p>" + message + "<hr/></p>"
     )
 
