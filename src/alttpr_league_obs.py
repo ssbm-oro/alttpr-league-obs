@@ -13,6 +13,7 @@ from helpers.obs_context_manager import scene_ar, source_ar, data_ar
 import obspython as obs
 class script_props(str, Enum):
     channel = auto()
+    token = auto()
     refresh_crew_button = auto()
     restart_p1_button = auto()
     restart_p2_button = auto()
@@ -78,12 +79,14 @@ handler.setFormatter(LogFormatter())
 logger.disabled = False
 logger.info("started")
 streams = []
+api_token = ""
 channel_list = None
 refresh_crew_button = None
 restart_p1_button = None
 restart_p2_button = None
 restart_p3_button = None
 restart_p4_button = None
+token_textbox = None
 
 
 def script_description():
@@ -109,6 +112,8 @@ def on_load(event):
     if event == obs.OBS_FRONTEND_EVENT_STREAMING_STARTING:
         if channel_list:
             obs.obs_property_set_enabled(channel_list, False)
+        if token_textbox:
+            obs.obs_property_set_enabled(token_textbox, False)
         pass
     if event == obs.OBS_FRONTEND_EVENT_STREAMING_STARTED:
         if (refresh_crew_button):
@@ -121,11 +126,15 @@ def on_load(event):
     if event == obs.OBS_FRONTEND_EVENT_STREAMING_STOPPED:
         if channel_list:
             obs.obs_property_set_enabled(channel_list, True)
+        if token_textbox:
+            obs.obs_property_set_enabled(token_textbox, True)
         pass
 
 
 def script_update(settings):
     channel = obs.obs_data_get_string(settings, sp.channel)
+    global api_token
+    api_token = obs.obs_data_get_string(settings, sp.token)
 
 
 def script_properties():
@@ -144,6 +153,9 @@ def script_properties():
     obs.obs_property_list_add_string(channel_list, lc.channel2, lc.channel2)
     obs.obs_property_list_add_string(channel_list, lc.channel3, lc.channel3)
     obs.obs_property_list_add_string(channel_list, lc.channel4, lc.channel4)
+
+    global token_textbox
+    token_textbox = obs.obs_properties_add_text(props, sp.token, "API Token", obs.OBS_TEXT_PASSWORD)
 
     global refresh_crew_button
     refresh_crew_button = obs.obs_properties_add_button(
@@ -206,7 +218,7 @@ def restart_stream(players: List[Player], index: int):
 
 def refresh_crew_pressed(props, prop, *arg, **kwargs):
     if curr_channel != league_channels.none:
-        curr_restream = league_client.get_restream(curr_channel)
+        curr_restream = league_client.get_restream(curr_channel, token=api_token)
         if (curr_restream and curr_restream.sg_data):
             update_crew(curr_restream)
 
@@ -222,7 +234,7 @@ def new_channel_selected(props, prop, settings):
     curr_channel = obs.obs_data_get_string(settings, sp.channel)
     print(curr_channel)
     if curr_channel != league_channels.none:
-        curr_restream = league_client.get_restream(curr_channel)
+        curr_restream = league_client.get_restream(curr_channel, token=api_token)
         if (curr_restream and curr_restream.sg_data):
             if curr_restream.twitch_stream_key:
                 set_stream_key(curr_restream.twitch_stream_key)

@@ -9,22 +9,19 @@ def script_path():
 
 base_url = "https://alttprleague.com/api/"
 
-api_secret = "xxAPISECRETxx"
-
-def league_get(uri: str, payload={}):
+def league_get(uri: str, payload={}, token=""):
     headers = {
-        'User-Agent': "oro-obs-bot_alpha"
+        'User-Agent': "oro-obs-bot_alpha",
+        'Authentication': token
     }
     try:
         with requests.get(uri, payload, headers=headers) as res:
-            print(res.status_code)
             if res.status_code == 200:
-                print(res.text)
                 return res.json()
     except Any:
         return None
 
-def get_restream(channel: str):
+def get_restream(channel: str, token=""):
     return episode_from_dict(
-        league_get(f'{base_url}restream?channel={channel}')
+        league_get(f'{base_url}restream?channel={channel}', token=token)
     )
