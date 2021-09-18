@@ -157,6 +157,7 @@ class Player:
     file_name: Optional[str]
     player_logo: Optional[str]
     team: Optional[Team]
+    tracker: Optional[str]
     crop: None
 
     def __init__(self, logo_id: Optional[int], player_id: Optional[int],
@@ -165,7 +166,8 @@ class Player:
             rtgg_id: Optional[str], twitch_id: Optional[int],
             twitch_name: Optional[str], twitch_url: Optional[str],
             sprite_id: Optional[int], file_name: Optional[str],
-            player_logo: Optional[str], team: Optional[Team], crop: None
+            player_logo: Optional[str], team: Optional[Team],
+            tracker: Optional[str], crop: None
         ) -> None:
         self.logo_id = logo_id
         self.player_id = player_id
@@ -181,6 +183,7 @@ class Player:
         self.file_name = file_name
         self.player_logo = player_logo
         self.team = team
+        self.tracker = tracker
         self.crop = crop
 
     @staticmethod
@@ -200,11 +203,12 @@ class Player:
         file_name = from_union([from_str, from_none], obj.get("file_name"))
         player_logo = from_union([from_str, from_none], obj.get("player_logo"))
         team = from_union([Team.from_dict, from_none], obj.get("team"))
+        tracker = from_union([from_str, from_none], obj.get("tracker"))
         crop = from_none(obj.get("crop"))
         return Player(
             logo_id, player_id, player_name, discord_name, discord_id,
             rtgg_name, rtgg_id, twitch_id, twitch_name, twitch_url, sprite_id,
-            file_name, player_logo, team, crop
+            file_name, player_logo, team, tracker, crop
         )
 
 
@@ -249,59 +253,72 @@ class SgData:
         return SgData(players, title, commentators, trackers, restreamer)
 
 
+class Week:
+    mode_name: Optional[str]
+    coop: Optional[bool]
+    keysanity: Optional[bool]
+    event: Optional[str]
+    playoff: Optional[bool]
+
+    def __init__(self, mode_name: Optional[str], coop: Optional[bool], keysanity: Optional[bool], event: Optional[str], playoff: Optional[bool]) -> None:
+        self.mode_name = mode_name
+        self.coop = coop
+        self.keysanity = keysanity
+        self.event = event
+        self.playoff = playoff
+
+    @staticmethod
+    def from_dict(obj: Any) -> 'Week':
+        assert isinstance(obj, dict)
+        mode_name = from_union([from_str, from_none], obj.get("mode_name"))
+        coop = from_union([from_bool, from_none], obj.get("coop"))
+        keysanity = from_union([from_bool, from_none], obj.get("keysanity"))
+        event = from_union([from_str, from_none], obj.get("event"))
+        playoff = from_union([from_bool, from_none], obj.get("playoff"))
+        return Week(mode_name, coop, keysanity, event, playoff)
+
+
 class RestreamEpisode:
-    sg_id: Optional[int]
     channel: Optional[str]
     tracker_prefix: Optional[str]
-    keysanity: Optional[int]
     twitch_id: None
-    twitch_access: None
-    twitch_refresh: None
-    twitch_stream_key : Optional[str]
+    twitch_stream_key: Optional[str]
     sg_data: Optional[SgData]
-    last_update: Optional[datetime]
+    rtgg_slug: Optional[str]
+    rtgg_status: Optional[str]
+    week: Optional[Week]
 
     def __init__(
-        self, sg_id: Optional[int], channel: Optional[str],
-        tracker_prefix: Optional[str], keysanity: Optional[int],
-        twitch_id: None, twitch_access: None, twitch_refresh: None,
+        self, channel: Optional[str], tracker_prefix: Optional[str],
         twitch_stream_key: Optional[str], sg_data: Optional[SgData],
-        last_update: Optional[datetime]
+        rtgg_slug: Optional[str], rtgg_status: Optional[str],
+        week: Optional[Week]
     ) -> None:
-        self.sg_id = sg_id
         self.channel = channel
         self.tracker_prefix = tracker_prefix
-        self.keysanity = keysanity
-        self.twitch_id = twitch_id
-        self.twitch_access = twitch_access
-        self.twitch_refresh = twitch_refresh
         self.twitch_stream_key = twitch_stream_key
         self.sg_data = sg_data
-        self.last_update = last_update
+        self.rtgg_slug = rtgg_slug
+        self.rtgg_status = rtgg_status
+        self.week = week
 
     @staticmethod
     def from_dict(obj: Any) -> 'RestreamEpisode':
         assert isinstance(obj, dict)
-        sg_id = from_union([from_int, from_none], obj.get("sg_id"))
         channel = from_union([from_str, from_none], obj.get("channel"))
         tracker_prefix = from_union(
             [from_str, from_none], obj.get("tracker_prefix")
         )
-        keysanity = from_union([from_int, from_none], obj.get("keysanity"))
-        twitch_id = from_none(obj.get("twitch_id"))
-        twitch_access = from_none(obj.get("twitch_access"))
-        twitch_refresh = from_none(obj.get("twitch_refresh"))
         twitch_stream_key = (
             from_union([from_str, from_none], obj.get("twitch_stream_key"))
         )
         sg_data = from_union([from_none, SgData.from_dict], obj.get("sg_data"))
-        last_update = from_union(
-            [from_datetime, from_none], obj.get("last_update")
-        )
+        rtgg_slug = from_union([from_str, from_none], obj.get("rtgg_slug"))
+        rtgg_status = from_union([from_str, from_none], obj.get("rtgg_status"))
+        week = from_union([from_none, Week.from_dict], obj.get("week"))
         return RestreamEpisode(
-            sg_id, channel, tracker_prefix, keysanity, twitch_id,
-            twitch_access, twitch_refresh, twitch_stream_key, sg_data,
-            last_update
+            channel, tracker_prefix, twitch_stream_key,
+            sg_data, rtgg_slug, rtgg_status, week
         )
 
 
