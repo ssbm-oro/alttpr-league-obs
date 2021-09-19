@@ -278,7 +278,7 @@ def new_channel_selected(props, prop, settings):
 
     return True
 
-def update_layout(week: Week, match_time: datetime):
+def update_layout(week: Week):
     if week is not None:
         week_no = week.event[-1]
         path = f"./../../../layouts/League_Season4-Open-week{week_no}.png"
@@ -286,12 +286,12 @@ def update_layout(week: Week, match_time: datetime):
             set_source_file(sn.layout_4p, path)
         else:
             set_source_file(sn.layout_2p, path)
-    if match_time is not None:
-        set_source_text(sn.scedule_time, f"{str(match_time.date)} - {str(match_time.time)}")
 
-def update_intro(week: Week):
+def update_intro(week: Week, match_time: datetime):
     if week:
         set_source_text(sn.week_mode, f"{week.event}: {week.mode_name}")
+    if match_time is not None:
+        set_source_text(sn.scedule_time, f"{str(match_time.date)} - {str(match_time.time)}")
 
 def update_players(players: List[Player], start_streams: bool = False):
     global streams
