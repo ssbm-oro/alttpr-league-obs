@@ -259,13 +259,15 @@ class Week:
     keysanity: Optional[bool]
     event: Optional[str]
     playoff: Optional[bool]
+    spoiler: Optional[bool]
 
-    def __init__(self, mode_name: Optional[str], coop: Optional[bool], keysanity: Optional[bool], event: Optional[str], playoff: Optional[bool]) -> None:
+    def __init__(self, mode_name: Optional[str], coop: Optional[bool], keysanity: Optional[bool], event: Optional[str], playoff: Optional[bool], spoiler: Optional[bool]) -> None:
         self.mode_name = mode_name
         self.coop = coop
         self.keysanity = keysanity
         self.event = event
         self.playoff = playoff
+        self.spoiler = spoiler
 
     @staticmethod
     def from_dict(obj: Any) -> 'Week':
@@ -275,7 +277,8 @@ class Week:
         keysanity = from_union([from_bool, from_none], obj.get("keysanity"))
         event = from_union([from_str, from_none], obj.get("event"))
         playoff = from_union([from_bool, from_none], obj.get("playoff"))
-        return Week(mode_name, coop, keysanity, event, playoff)
+        spoiler = from_union([from_bool, from_none], obj.get("spoiler"))
+        return Week(mode_name, coop, keysanity, event, playoff, spoiler)
 
 
 class RestreamEpisode:
