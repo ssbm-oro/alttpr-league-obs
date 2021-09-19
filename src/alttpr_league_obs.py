@@ -291,7 +291,7 @@ def update_intro(week: Week, match_time: datetime):
     if week:
         set_source_text(sn.week_mode, f"{week.event}: {week.mode_name}")
     if match_time is not None:
-        set_source_text(sn.scedule_time, f"{str(match_time.date)} - {str(match_time.time)}")
+        set_source_text(sn.scedule_time, match_time.strftime("%B %d %Y %I:%M %p"))
 
 def update_players(players: List[Player], start_streams: bool = False):
     global streams
