@@ -444,18 +444,18 @@ def set_stream_key(stream_key: str):
 def save_crop(players: List[Player], coop: bool):
     if coop:
         tl_crop = get_crop_settings(scene_names.four_player, sn.tl_game, sn.tl_timer)
-        print(league_client.put_crop(players[0].player_id, tl_crop, token=api_token))
+        print(league_client.post_crop(players[0].player_id, tl_crop, token=api_token))
         tr_crop = get_crop_settings(scene_names.four_player, sn.tr_game, sn.tr_timer)
-        print(league_client.put_crop(players[1].player_id, tr_crop, token=api_token))
+        print(league_client.post_crop(players[1].player_id, tr_crop, token=api_token))
         bl_crop = get_crop_settings(scene_names.four_player, sn.bl_game, sn.bl_timer)
-        print(league_client.put_crop(players[2].player_id, bl_crop, token=api_token))
+        print(league_client.post_crop(players[2].player_id, bl_crop, token=api_token))
         br_crop = get_crop_settings(scene_names.four_player, sn.br_game, sn.br_timer)
-        print(league_client.put_crop(players[3].player_id, br_crop, token=api_token))
+        print(league_client.post_crop(players[3].player_id, br_crop, token=api_token))
     else:
         left_crop = get_crop_settings(sc_n.two_player, sn.left_game, sn.left_timer)
-        print(league_client.put_crop(players[0].player_id, left_crop, token=api_token))
+        print(league_client.post_crop(players[0].player_id, left_crop, token=api_token))
         right_crop = get_crop_settings(sc_n.two_player, sn.right_game, sn.right_timer)
-        print(league_client.put_crop(players[1].player_id, right_crop, token=api_token))
+        print(league_client.post_crop(players[1].player_id, right_crop, token=api_token))
 
 def get_crop_settings(scene_name: str, game_source_name: str, timer_source_name: str):
     if (

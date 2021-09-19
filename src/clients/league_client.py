@@ -44,7 +44,7 @@ def get_restream(channel: str, token=""):
     )
 
 
-def put_crop(id: int, crop_settings: CropSettings, token=""):
+def post_crop(id: int, crop_settings: CropSettings, token=""):
     return league_post(
         f'{base_url}crop?id={id}',
         payload=crop_settings.to_dict(),
