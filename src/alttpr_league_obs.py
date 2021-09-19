@@ -438,10 +438,10 @@ def set_stream_key(stream_key: str):
     service = obs.obs_frontend_get_streaming_service()
     if (service is None):
         return
-    with obs.obs_service_get_settings(service) as settings:
-        obs.obs_data_set_string(settings, "key", stream_key)
-        obs.obs_service_update(service, settings)
-        obs.obs_data_release(settings)
+    settings = obs.obs_service_get_settings(service)
+    obs.obs_data_set_string(settings, "key", stream_key)
+    obs.obs_service_update(service, settings)
+    obs.obs_data_release(settings)
     obs.obs_frontend_save_streaming_service()
 
 def save_crop(players: List[Player], coop: bool):
