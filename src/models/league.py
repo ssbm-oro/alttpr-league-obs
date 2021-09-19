@@ -171,7 +171,7 @@ class Player:
     player_logo: Optional[str]
     team: Optional[Team]
     tracker: Optional[str]
-    crop: None
+    crop: Optional[CropSettings]
 
     def __init__(self, logo_id: Optional[int], player_id: Optional[int],
             player_name: Optional[str], discord_name: Optional[str],
@@ -180,7 +180,7 @@ class Player:
             twitch_name: Optional[str], twitch_url: Optional[str],
             sprite_id: Optional[int], file_name: Optional[str],
             player_logo: Optional[str], team: Optional[Team],
-            tracker: Optional[str], crop: None
+            tracker: Optional[str], crop: Optional[CropSettings]
         ) -> None:
         self.logo_id = logo_id
         self.player_id = player_id
@@ -217,7 +217,7 @@ class Player:
         player_logo = from_union([from_str, from_none], obj.get("player_logo"))
         team = from_union([Team.from_dict, from_none], obj.get("team"))
         tracker = from_union([from_str, from_none], obj.get("tracker"))
-        crop = from_none(obj.get("crop"))
+        crop = from_union([CropSettings.from_dict, from_none], (obj.get("crop")))
         return Player(
             logo_id, player_id, player_name, discord_name, discord_id,
             rtgg_name, rtgg_id, twitch_id, twitch_name, twitch_url, sprite_id,
