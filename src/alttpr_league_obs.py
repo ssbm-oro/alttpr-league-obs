@@ -277,22 +277,8 @@ def update_players(players: List[Player], start_streams: bool = False):
             obs.obs_property_set_enabled(restart_p4_button, True)
 
 def update_trackers(restream: RestreamEpisode):
-    keys = restream.keysanity == 1
-
-    left_tracker_url = str.format(
-                tracker_url, tracker_prefix=restream.tracker_prefix,
-                side="left", password="league1",
-                keysanity=keys, layout="2"
-            )
-    print(left_tracker_url)
-    set_source_url(sn.left_tracker, left_tracker_url)
-    right_tracker_url = str.format(
-                tracker_url, tracker_prefix=restream.tracker_prefix,
-                side="right", password="league1",
-                keysanity=keys, layout="2"
-            )
-    print(right_tracker_url)
-    set_source_url(sn.right_tracker, right_tracker_url)
+    set_source_url(sn.left_tracker, restream.sg_data.players[0].tracker)
+    set_source_url(sn.right_tracker, restream.sg_data.players[1].tracker)
 
 def update_teams(players):
     l_team = players[0].team
