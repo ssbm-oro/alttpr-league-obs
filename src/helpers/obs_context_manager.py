@@ -37,12 +37,21 @@ def data_ar(source_settings=None):
 
 
 @contextmanager
-def scene_ar(scene):
-    scene = obs.obs_scene_from_source(scene)
+def scene_ar(scene_source):
+    scene = obs.obs_scene_from_source(scene_source)
     try:
         yield scene
     finally:
         obs.obs_scene_release(scene)
+
+
+@contextmanager
+def scene_list_ar():
+    scene_list = obs.obs_frontend_get_scenes()
+    try:
+        yield scene_list
+    finally:
+        obs.source_list_release(scene_list)
 
 
 @contextmanager

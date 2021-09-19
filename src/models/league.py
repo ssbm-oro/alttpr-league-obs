@@ -16,6 +16,19 @@ class CropSettings:
     timer_right: int
     timer_bottom: int
 
+    def __init__(
+        self, game_top: int, game_left: int, game_right: int, game_bottom: int,
+        timer_top: int, timer_left: int, timer_right: int, timer_bottom: int
+    ) -> None:
+        self.game_top = game_top
+        self.game_left = game_left
+        self.game_right = game_right
+        self.game_bottom = game_bottom
+        self.timer_top = timer_top
+        self.timer_left = timer_left
+        self.timer_right = timer_right
+        self.timer_bottom = timer_bottom
+
     @staticmethod
     def from_dict(obj: Any) -> 'CropSettings':
         assert isinstance(obj, dict)

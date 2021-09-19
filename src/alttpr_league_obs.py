@@ -6,10 +6,10 @@ from enum import Enum, auto
 import subprocess
 from typing import List
 import clients.racetime_client as racetime_client
-from models.league import Player, RestreamEpisode, Week
+from models.league import CropSettings, Player, RestreamEpisode, Week
 import clients.league_client as league_client
 from helpers.LogFormatter import LogFormatter
-from helpers.obs_context_manager import scene_ar, source_ar, data_ar
+from helpers.obs_context_manager import scene_ar, scene_list_ar, source_ar, data_ar
 
 import obspython as obs
 class script_props(str, Enum):
@@ -58,6 +58,18 @@ class source_names(str, Enum):
     countdown = "Time To Match"
     layout_2p = "TEMP 2P Layout"
     layout_4p = "TEMP 4P layout"
+    left_game = "LeftGame"
+    left_timer = "LeftTimer"
+    right_game = "RightGame"
+    right_timer = "RightTimer"
+    tl_game = "LeftGame"
+    tl_timer = "LeftTimer"
+    tr_game = "RightGame"
+    tr_timer = "RightTimer"
+    bl_game = "BLGame"
+    bl_timer = "BLTimer"
+    br_game = "BRGame"
+    br_timer = "BRTimer"
 
 
 class scene_names(str, Enum):
@@ -65,6 +77,8 @@ class scene_names(str, Enum):
     two_player = "2P"
     four_player = "4P"
     outro = "Outro"
+
+sc_n = scene_names
 
 tracker_url = (
     "https://lttp-tracker-tournament-only.firebaseapp.com/"
@@ -114,6 +128,7 @@ def on_load(event):
     if event == obs.OBS_FRONTEND_EVENT_FINISHED_LOADING:
         pass
     if event == obs.OBS_FRONTEND_EVENT_EXIT:
+        save_crop(curr_restream.sg_data.players, curr_restream.week.coop)
         close_streams()
     if event == obs.OBS_FRONTEND_EVENT_STREAMING_STARTING:
         if channel_list:
@@ -247,7 +262,7 @@ def new_channel_selected(props, prop, settings):
             players = curr_restream.sg_data.players
 
             update_intro(curr_restream.week)
-            update_players(players, True)
+            update_players(players, False)
             update_teams(players)
             update_trackers(curr_restream)
             update_crew(curr_restream)
@@ -264,7 +279,7 @@ def new_channel_selected(props, prop, settings):
 
 def update_layout(week: Week):
     if week is not None:
-        week_no = week.event[:-1]
+        week_no = week.event[-1]
         path = f"./../../../layouts/League_Season4-Open-week{week_no}.png"
         if week.coop:
             set_source_file(sn.layout_4p, path)
@@ -291,10 +306,25 @@ def update_players(players: List[Player], start_streams: bool = False):
         streams.append(subprocess.Popen(get_streamlink_command(players, 1)))
         obs.obs_property_set_enabled(restart_p2_button, True)
     set_source_text(sn.topleft_player, players[0].player_name)
+    if players[0].crop is not None:
+        set_crop_settings(players[0].crop, sc_n.two_player, sn.left_game, sn.left_timer)
+    if players[1].crop is not None:
+        set_crop_settings(players[1].crop, sc_n.two_player, sn.right_game, sn.right_timer)
     set_source_text(sn.topright_player, players[1].player_name)
     if (len(players) > 2):
         set_source_text(sn.left_player, f"{players[0].player_name}, {players[2].player_name}")
         set_source_text(sn.right_player, f"{players[1].player_name}, {players[3].player_name}")
+
+        if players[0].crop is not None:
+            set_crop_settings(players[0].crop, sc_n.four_player, sn.tl_game, sn.tl_timer)
+        if players[1].crop is not None:
+            set_crop_settings(players[1].crop, sc_n.four_player, sn.tr_game, sn.tr_timer)
+        if players[2].crop is not None:
+            set_crop_settings(players[2].crop, sc_n.four_player, sn.bl_game, sn.bl_timer)
+        if players[3].crop is not None:
+            set_crop_settings(players[3].crop, sc_n.four_player, sn.br_game, sn.br_timer)
+
+        set_source_text(sn.topright_player, players[1].player_name)
         set_source_text(sn.botleft_player, players[2].player_name)
         set_source_text(sn.botright_player, players[3].player_name)
         if start_streams:
@@ -410,3 +440,78 @@ def set_stream_key(stream_key: str):
         obs.obs_service_update(service, settings)
         obs.obs_data_release(settings)
     obs.obs_frontend_save_streaming_service()
+
+def save_crop(players: List[Player], coop: bool):
+    if coop:
+        tl_crop = get_crop_settings(scene_names.four_player, sn.tl_game, sn.tl_timer)
+        print(league_client.put_crop(players[0].player_id, tl_crop, token=api_token))
+        tr_crop = get_crop_settings(scene_names.four_player, sn.tr_game, sn.tr_timer)
+        print(league_client.put_crop(players[1].player_id, tr_crop, token=api_token))
+        bl_crop = get_crop_settings(scene_names.four_player, sn.bl_game, sn.bl_timer)
+        print(league_client.put_crop(players[2].player_id, bl_crop, token=api_token))
+        br_crop = get_crop_settings(scene_names.four_player, sn.br_game, sn.br_timer)
+        print(league_client.put_crop(players[3].player_id, br_crop, token=api_token))
+    else:
+        left_crop = get_crop_settings(sc_n.two_player, sn.left_game, sn.left_timer)
+        print(league_client.put_crop(players[0].player_id, left_crop, token=api_token))
+        right_crop = get_crop_settings(sc_n.two_player, sn.right_game, sn.right_timer)
+        print(league_client.put_crop(players[1].player_id, right_crop, token=api_token))
+
+def get_crop_settings(scene_name: str, game_source_name: str, timer_source_name: str):
+    if (
+        scene_name is None or scene_name == "" or 
+        game_source_name is None or game_source_name == "" or
+        timer_source_name is None or timer_source_name == ""
+    ):
+        return
+    with scene_list_ar() as scenes:
+        for scene in scenes:
+            name = obs.obs_source_get_name(scene)
+            if name == scene_name:
+                scene = obs.obs_scene_from_source(scene)
+                game_source = obs.obs_scene_find_source_recursive(scene, game_source_name)
+                timer_source = obs.obs_scene_find_source_recursive(scene, timer_source_name)
+                if game_source and timer_source:
+                    game_crop = obs.obs_sceneitem_crop()
+                    obs.obs_sceneitem_get_crop(game_source, game_crop)
+                    timer_crop = obs.obs_sceneitem_crop()
+                    obs.obs_sceneitem_get_crop(timer_source, timer_crop)
+                    return(
+                        CropSettings(
+                            game_crop.top, game_crop.left,
+                            game_crop.right, game_crop.bottom,
+                            timer_crop.top, timer_crop.left,
+                            timer_crop.right, timer_crop.bottom
+                        )
+                    )
+
+def set_crop_settings(settings: CropSettings, scene_name: str, game_source_name: str, timer_source_name: str):
+    if (
+        settings is None or 
+        scene_name is None or scene_name == "" or 
+        game_source_name is None or game_source_name == "" or
+        timer_source_name is None or timer_source_name == ""
+    ):
+        return
+    
+    with scene_list_ar() as scenes:
+        for scene in scenes:
+            name = obs.obs_source_get_name(scene)
+            if name == scene_name:
+                scene = obs.obs_scene_from_source(scene)
+                game_source = obs.obs_scene_find_source_recursive(scene, game_source_name)
+                timer_source = obs.obs_scene_find_source_recursive(scene, timer_source_name)
+                if game_source and timer_source:
+                    game_crop = obs.obs_sceneitem_crop()
+                    game_crop.top = settings.game_top
+                    game_crop.bottom = settings.game_bottom
+                    game_crop.left = settings.game_left
+                    game_crop.right = settings.game_right
+                    obs.obs_sceneitem_set_crop(game_source, game_crop)
+                    timer_crop = obs.obs_sceneitem_crop()
+                    timer_crop.top = settings.timer_top
+                    timer_crop.bottom = settings.timer_bottom
+                    timer_crop.left = settings.timer_left
+                    timer_crop.right = settings.timer_right
+                    obs.obs_sceneitem_get_crop(timer_source, timer_crop)
+    
