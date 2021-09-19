@@ -353,10 +353,10 @@ def set_source_visibility(scene_name: str, source_name: str, vis: bool):
 
 def get_streamlink_command(players: List[Player], i: int):
     port = 27770 + i
-    return ["/Library/Frameworks/Python.framework/Versions/3.7/bin/streamlink",
-        f"https://twitch.tv/{players[i].twitch_url}", "720p",
-        "--player-external-http", "--player-external-http-port", str(port),
-        "--twitch-disable-ads"]
+    return ["streamlink.exe", f"https://twitch.tv/{players[i].twitch_url}",
+        "best", "--player-external-http", "--player-external-http-port",
+        str(port), "--twitch-disable-ads", "--twitch-disable-hosting",
+        "--twitch-disable-reruns", "--retry-streams", "5"]
 
 def close_streams():
     for stream in streams:
