@@ -262,7 +262,7 @@ def new_channel_selected(props, prop, settings):
             players = curr_restream.sg_data.players
 
             update_intro(curr_restream.week)
-            update_players(players, False)
+            update_players(players, True)
             update_teams(players)
             update_trackers(curr_restream)
             update_crew(curr_restream)
