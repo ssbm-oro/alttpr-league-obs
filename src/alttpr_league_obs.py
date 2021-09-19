@@ -70,6 +70,7 @@ class source_names(str, Enum):
     bl_timer = "BLTimer"
     br_game = "BRGame"
     br_timer = "BRTimer"
+    scedule_time = "Schedule Time"
 
 
 class scene_names(str, Enum):
@@ -261,7 +262,7 @@ def new_channel_selected(props, prop, settings):
                 set_stream_key(curr_restream.twitch_stream_key)
             players = curr_restream.sg_data.players
 
-            update_intro(curr_restream.week)
+            update_intro(curr_restream.week, curr_restream.sg_data.match_time)
             update_players(players, True)
             update_teams(players)
             update_trackers(curr_restream)
@@ -277,7 +278,7 @@ def new_channel_selected(props, prop, settings):
 
     return True
 
-def update_layout(week: Week):
+def update_layout(week: Week, match_time: datetime):
     if week is not None:
         week_no = week.event[-1]
         path = f"./../../../layouts/League_Season4-Open-week{week_no}.png"
@@ -285,6 +286,8 @@ def update_layout(week: Week):
             set_source_file(sn.layout_4p, path)
         else:
             set_source_file(sn.layout_2p, path)
+    if match_time is not None:
+        set_source_text(sn.scedule_time, f"{str(match_time.date)} - {str(match_time.time)}")
 
 def update_intro(week: Week):
     if week:

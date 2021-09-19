@@ -1,5 +1,5 @@
 from typing import Optional, List, Any
-from datetime import datetime
+from datetime import date, datetime
 from models import (
     from_int, from_bool, from_str, from_list, to_class, from_none,
      from_datetime, from_union, is_type
@@ -226,6 +226,7 @@ class Player:
 
 
 class SgData:
+    match_time: Optional[datetime]
     players: Optional[List[Player]]
     title: Optional[str]
     commentators: Optional[List[Crew]]
@@ -233,10 +234,11 @@ class SgData:
     restreamer: Optional[List[Crew]]
 
     def __init__(
-        self, players: Optional[List[Player]], title: Optional[str],
-        commentators: Optional[List[Crew]], trackers: Optional[List[Crew]],
-        restreamer: Optional[List[Crew]]
+        self, match_time: Optional[datetime], players: Optional[List[Player]],
+        title: Optional[str], commentators: Optional[List[Crew]],
+        trackers: Optional[List[Crew]], restreamer: Optional[List[Crew]]
     ) -> None:
+        self.match_time = match_time
         self.players = players
         self.title = title
         self.commentators = commentators
@@ -246,6 +248,7 @@ class SgData:
     @staticmethod
     def from_dict(obj: Any) -> 'SgData':
         assert isinstance(obj, dict)
+        match_time = from_union([from_datetime, from_none], obj.get("match_time"))
         players = from_union(
             [lambda x: from_list(Player.from_dict, x), from_none],
             obj.get("players")
@@ -263,7 +266,8 @@ class SgData:
             [lambda x: from_list(Crew.from_dict, x), from_none],
             obj.get("restreamer")
         )
-        return SgData(players, title, commentators, trackers, restreamer)
+        return SgData(match_time, players, title, commentators, trackers,
+            restreamer)
 
 
 class Week:
