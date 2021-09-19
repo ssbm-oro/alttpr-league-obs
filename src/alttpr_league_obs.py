@@ -5,7 +5,7 @@ from enum import Enum, auto
 import subprocess
 from typing import List
 import clients.racetime_client as racetime_client
-from models.league import Player, RestreamEpisode
+from models.league import Player, RestreamEpisode, Week
 import clients.league_client as league_client
 from helpers.LogFormatter import LogFormatter
 from helpers.obs_context_manager import scene_ar, source_ar, data_ar
@@ -53,6 +53,7 @@ class source_names(str, Enum):
     topright_tracker = "TR-1"
     botleft_tracker = "BL-1"
     botright_tracker = "BR-1"
+    week_mode = "Week # And Mode"
 
 
 class scene_names(str, Enum):
@@ -240,6 +241,7 @@ def new_channel_selected(props, prop, settings):
                 set_stream_key(curr_restream.twitch_stream_key)
             players = curr_restream.sg_data.players
 
+            update_intro(curr_restream.week)
             update_players(players, True)
             update_teams(players)
             update_trackers(curr_restream)
@@ -249,6 +251,10 @@ def new_channel_selected(props, prop, settings):
             obs.timer_add(update_sources, 100)
 
     return True
+
+def update_intro(week: Week):
+    if week:
+        set_source_text(sn.week_mode, f"{week.event}: {week.mode_name}")
 
 def update_players(players: List[Player], start_streams: bool = False):
     global streams
@@ -268,6 +274,8 @@ def update_players(players: List[Player], start_streams: bool = False):
     set_source_text(sn.topleft_player, players[0].player_name)
     set_source_text(sn.topright_player, players[1].player_name)
     if (len(players) > 2):
+        set_source_text(sn.left_player, f"{players[0].player_name}, {players[2].player_name}")
+        set_source_text(sn.right_player, f"{players[1].player_name}, {players[3].player_name}")
         set_source_text(sn.botleft_player, players[2].player_name)
         set_source_text(sn.botright_player, players[3].player_name)
         if start_streams:
