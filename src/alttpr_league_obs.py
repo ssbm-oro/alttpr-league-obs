@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 import logging
 from threading import Thread
 from enum import Enum, auto
@@ -54,6 +55,7 @@ class source_names(str, Enum):
     botleft_tracker = "BL-1"
     botright_tracker = "BR-1"
     week_mode = "Week # And Mode"
+    countdown = "Time To Match"
 
 
 class scene_names(str, Enum):
@@ -88,6 +90,7 @@ restart_p2_button = None
 restart_p3_button = None
 restart_p4_button = None
 token_textbox = None
+race_started_at : datetime
 
 
 def script_description():
@@ -231,7 +234,7 @@ def new_channel_selected(props, prop, settings):
     global curr_restream
     global curr_channel
     close_streams()
-    obs.timer_remove(update_sources)
+    obs.timer_remove(update_countdown)
     curr_channel = obs.obs_data_get_string(settings, sp.channel)
     print(curr_channel)
     if curr_channel != league_channels.none:
@@ -247,8 +250,12 @@ def new_channel_selected(props, prop, settings):
             update_trackers(curr_restream)
             update_crew(curr_restream)
 
-        if curr_restream is not None:
-            obs.timer_add(update_sources, 100)
+            if curr_restream.rtgg_slug:
+                race = racetime_client.get_race_by_name(curr_restream.rtgg_slug)
+                if race.started_at:
+                    global race_started_at
+                    race_started_at = race.started_at
+                    obs.timer_add(update_countdown, 100)
 
     return True
 
@@ -315,8 +322,26 @@ def update_crew(restream: RestreamEpisode):
     set_source_text(sn.crew4p, f"{comms}\n{trackers}")
     print(f"{comms}\n{trackers}")
 
-def update_sources():
+def update_countdown():
+    if race_started_at is not None:
+        timer : timedelta
+        if curr_restream.week.spoiler:
+            timer = datetime.now(timezone.utc) - race_started_at
+        else:
+            timer = datetime.now(timezone.utc) - race_started_at - timedelta(minutes=10)
+        time = timer_to_str(timer)
+        set_source_text(sn.countdown, time)
     pass
+
+
+def timer_to_str(timer: timedelta, decimals: bool = True) -> str:
+    substring = 9
+    if not decimals:
+        substring = 7
+    if timer.total_seconds() < 0.0:
+        timer = timer * -1.0
+        return "-" + str(timer)[:substring]
+    return str(timer)[:substring]
 
 
 def set_source_text(source_name: str, text: str):
