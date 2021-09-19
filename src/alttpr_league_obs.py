@@ -56,6 +56,8 @@ class source_names(str, Enum):
     botright_tracker = "BR-1"
     week_mode = "Week # And Mode"
     countdown = "Time To Match"
+    layout_2p = "TEMP 2P Layout"
+    layout_4p = "TEMP 4P layout"
 
 
 class scene_names(str, Enum):
@@ -249,6 +251,7 @@ def new_channel_selected(props, prop, settings):
             update_teams(players)
             update_trackers(curr_restream)
             update_crew(curr_restream)
+            update_layout(curr_restream.week)
 
             if curr_restream.rtgg_slug:
                 race = racetime_client.get_race_by_name(curr_restream.rtgg_slug)
@@ -258,6 +261,15 @@ def new_channel_selected(props, prop, settings):
                     obs.timer_add(update_countdown, 100)
 
     return True
+
+def update_layout(week: Week):
+    if week is not None:
+        week_no = week.event[:-1]
+        path = f"./../../../layouts/League_Season4-Open-week{week_no}.png"
+        if week.coop:
+            set_source_file(sn.layout_4p, path)
+        else:
+            set_source_file(sn.layout_2p, path)
 
 def update_intro(week: Week):
     if week:
