@@ -26,10 +26,11 @@ def league_get(uri: str, payload={}, token=""):
 def league_post(uri: str, payload={}, token=""):
     headers = {
         'User-Agent': "oro-obs-bot_alpha",
-        'Authentication': token
+        'Authentication': token,
+        'Content-Type': 'application/json'
     }
     try:
-        with requests.post(uri, data=payload, headers=headers) as res:
+        with requests.post(uri, json=payload, headers=headers) as res:
             if res.status_code == 204:
                 return True
             else:
@@ -45,6 +46,7 @@ def get_restream(channel: str, token=""):
 
 
 def post_crop(id: int, crop_settings: CropSettings, token=""):
+    print(crop_settings.to_dict())
     return league_post(
         f'{base_url}crop?id={id}',
         payload=crop_settings.to_dict(),
