@@ -516,5 +516,5 @@ def set_crop_settings(settings: CropSettings, scene_name: str, game_source_name:
                     timer_crop.bottom = settings.timer_bottom
                     timer_crop.left = settings.timer_left
                     timer_crop.right = settings.timer_right
-                    obs.obs_sceneitem_get_crop(timer_source, timer_crop)
+                    obs.obs_sceneitem_set_crop(timer_source, timer_crop)
     
