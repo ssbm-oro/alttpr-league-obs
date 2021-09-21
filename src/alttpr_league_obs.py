@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime, timedelta, timezone
+import pytz
 import logging
 from threading import Thread
 from enum import Enum, auto
@@ -16,6 +17,7 @@ class script_props(str, Enum):
     channel = auto()
     token = auto()
     refresh_crew_button = auto()
+    refresh_countdown_button = auto()
     restart_p1_button = auto()
     restart_p2_button = auto()
     restart_p3_button = auto()
@@ -150,7 +152,7 @@ def on_load(event):
             obs.obs_property_set_enabled(channel_list, True)
         if token_textbox:
             obs.obs_property_set_enabled(token_textbox, True)
-        pass
+    return True
 
 
 def script_update(settings):
@@ -178,6 +180,15 @@ def script_properties():
 
     global token_textbox
     token_textbox = obs.obs_properties_add_text(props, sp.token, "API Token", obs.OBS_TEXT_PASSWORD)
+
+    refresh_countdown = obs.obs_properties_add_button(
+        props, sp.refresh_countdown_button, "Refresh Countdown",
+        lambda *props: None
+    )
+    obs.obs_property_set_modified_callback(
+        refresh_countdown, refresh_countdown_pressed
+    )
+
 
     global refresh_crew_button
     refresh_crew_button = obs.obs_properties_add_button(
@@ -269,14 +280,23 @@ def new_channel_selected(props, prop, settings):
             update_crew(curr_restream)
             update_layout(curr_restream.week)
 
-            if curr_restream.rtgg_slug:
-                race = racetime_client.get_race_by_name(curr_restream.rtgg_slug)
-                if race.started_at:
-                    global race_started_at
-                    race_started_at = race.started_at
-                    obs.timer_add(update_countdown, 100)
+            update_racetime(curr_restream.rtgg_slug)
 
     return True
+
+def refresh_countdown_pressed(props, prop, *arg, **args):
+    if curr_channel != league_channels.none:
+        restream = league_client.get_restream(curr_channel, token=api_token)
+        update_racetime(restream.rtgg_slug)
+    pass
+
+def update_racetime(rtgg_slug: str):
+    if rtgg_slug:
+        race = racetime_client.get_race_by_name(rtgg_slug)
+        if race.started_at:
+            global race_started_at
+            race_started_at = race.started_at
+            obs.timer_add(update_countdown, 100)
 
 def update_layout(week: Week):
     if week is not None:
@@ -291,7 +311,10 @@ def update_intro(week: Week, match_time: datetime):
     if week:
         set_source_text(sn.week_mode, f"{week.event}: {week.mode_name}")
     if match_time is not None:
-        set_source_text(sn.scedule_time, match_time.strftime("%B %d %Y %I:%M %p"))
+        set_source_text(
+            sn.scedule_time,
+            match_time.astimezone('US/Eastern').strftime("%B %d %Y %I:%M %p")
+        )
 
 def update_players(players: List[Player], start_streams: bool = False):
     global streams
@@ -337,8 +360,14 @@ def update_players(players: List[Player], start_streams: bool = False):
             obs.obs_property_set_enabled(restart_p4_button, True)
 
 def update_trackers(restream: RestreamEpisode):
-    set_source_url(sn.left_tracker, restream.sg_data.players[0].tracker)
-    set_source_url(sn.right_tracker, restream.sg_data.players[1].tracker)
+    if restream.week.coop:
+        set_source_url(sn.topleft_tracker, restream.sg_data.players[0].tracker)
+        set_source_url(sn.topright_tracker, restream.sg_data.players[1].tracker)
+        set_source_url(sn.botleft_tracker, restream.sg_data.players[2].tracker)
+        set_source_url(sn.botright_tracker, restream.sg_data.players[3].tracker)
+    else:
+        set_source_url(sn.left_tracker, restream.sg_data.players[0].tracker)
+        set_source_url(sn.right_tracker, restream.sg_data.players[1].tracker)
 
 def update_teams(players):
     l_team = players[0].team
