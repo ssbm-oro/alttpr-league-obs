@@ -232,11 +232,13 @@ class SgData:
     commentators: Optional[List[Crew]]
     trackers: Optional[List[Crew]]
     restreamer: Optional[List[Crew]]
+    is_invitational: Optional[bool]
 
     def __init__(
         self, match_time: Optional[datetime], players: Optional[List[Player]],
         title: Optional[str], commentators: Optional[List[Crew]],
-        trackers: Optional[List[Crew]], restreamer: Optional[List[Crew]]
+        trackers: Optional[List[Crew]], restreamer: Optional[List[Crew]],
+        is_invitational: Optional[bool]
     ) -> None:
         self.match_time = match_time
         self.players = players
@@ -244,6 +246,7 @@ class SgData:
         self.commentators = commentators
         self.trackers = trackers
         self.restreamer = restreamer
+        self.is_invitational = is_invitational
 
     @staticmethod
     def from_dict(obj: Any) -> 'SgData':
@@ -266,8 +269,9 @@ class SgData:
             [lambda x: from_list(Crew.from_dict, x), from_none],
             obj.get("restreamer")
         )
+        is_invitational = from_union([from_bool, from_none], obj.get("is_invitational"))
         return SgData(match_time, players, title, commentators, trackers,
-            restreamer)
+            restreamer, is_invitational)
 
 
 class Week:

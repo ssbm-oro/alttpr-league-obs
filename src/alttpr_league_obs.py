@@ -7,7 +7,7 @@ from enum import Enum, auto
 import subprocess
 from typing import List
 import clients.racetime_client as racetime_client
-from models.league import CropSettings, Player, RestreamEpisode, Week
+from models.league import CropSettings, Player, RestreamEpisode, SgData, Week
 import clients.league_client as league_client
 from helpers.LogFormatter import LogFormatter
 from helpers.obs_context_manager import scene_ar, scene_list_ar, source_ar, data_ar
@@ -298,14 +298,17 @@ def update_racetime(rtgg_slug: str):
             race_started_at = race.started_at
             obs.timer_add(update_countdown, 100)
 
-def update_layout(week: Week):
-    if week is not None:
-        week_no = week.event[-1]
-        path = f"./../../../layouts/League_Season4-Open-week{week_no}.png"
-        if week.coop:
-            set_source_file(sn.layout_4p, path)
-        else:
-            set_source_file(sn.layout_2p, path)
+def update_layout(restream: RestreamEpisode):
+    if restream is not None and restream.sg_data is not None:
+        if restream.week is not None:
+            week_no = restream.week.event[-1]
+            path = f"./../../../layouts/League_Season4-Open-week{week_no}.png"
+            if restream.sg_data.is_invitational:                
+                path = f"./../../../layouts/League_Season4-week{week_no}.png"
+            if restream.week.coop:
+                set_source_file(sn.layout_4p, path)
+            else:
+                set_source_file(sn.layout_2p, path)
 
 def update_intro(week: Week, match_time: datetime):
     if week:
@@ -313,7 +316,7 @@ def update_intro(week: Week, match_time: datetime):
     if match_time is not None:
         set_source_text(
             sn.scedule_time,
-            match_time.astimezone('US/Eastern').strftime("%B %d %Y %I:%M %p")
+            match_time.astimezone(pytz.timezone('US/Eastern')).strftime("%B %d %Y %I:%M %p")
         )
 
 def update_players(players: List[Player], start_streams: bool = False):
