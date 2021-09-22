@@ -278,7 +278,7 @@ def new_channel_selected(props, prop, settings):
             update_teams(players)
             update_trackers(curr_restream)
             update_crew(curr_restream)
-            update_layout(curr_restream.week)
+            update_layout(curr_restream)
 
             update_racetime(curr_restream.rtgg_slug)
 
