@@ -400,15 +400,19 @@ def update_crew(restream: RestreamEpisode):
     print(f"{comms}\n{trackers}")
 
 def update_countdown():
+    start_time :datetime
+    if curr_restream.sg_data is not None:
+        start_time = curr_restream.sg_data.match_time
     if race_started_at is not None:
-        timer : timedelta
-        if curr_restream.week.spoiler:
-            timer = datetime.now(timezone.utc) - race_started_at
-        else:
-            timer = datetime.now(timezone.utc) - race_started_at - timedelta(minutes=10)
-        time = timer_to_str(timer)
-        set_source_text(sn.countdown, time)
-    pass
+        start_time = race_started_at
+
+    timer : timedelta
+    if curr_restream.week.spoiler:
+        timer = datetime.now(timezone.utc) - start_time
+    else:
+        timer = datetime.now(timezone.utc) - start_time - timedelta(minutes=10)
+    time = timer_to_str(timer)
+    set_source_text(sn.countdown, time)
 
 
 def timer_to_str(timer: timedelta, decimals: bool = True) -> str:
