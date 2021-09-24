@@ -109,7 +109,7 @@ restart_p2_button = None
 restart_p3_button = None
 restart_p4_button = None
 token_textbox = None
-race_started_at : datetime
+race_started_at : datetime = None
 
 
 def script_description():
@@ -273,6 +273,9 @@ def new_channel_selected(props, prop, settings):
                 set_stream_key(curr_restream.twitch_stream_key)
             players = curr_restream.sg_data.players
 
+            if curr_restream.sg_data is not None:
+                obs.timer_add(update_countdown, 100)
+
             update_intro(curr_restream.week, curr_restream.sg_data.match_time)
             update_players(players, True)
             update_teams(players)
@@ -296,7 +299,6 @@ def update_racetime(rtgg_slug: str):
         if race.started_at:
             global race_started_at
             race_started_at = race.started_at
-            obs.timer_add(update_countdown, 100)
 
 def update_layout(restream: RestreamEpisode):
     if restream is not None and restream.sg_data is not None:
