@@ -404,7 +404,10 @@ def update_crew(restream: RestreamEpisode):
 def update_countdown():
     start_time :datetime
     if curr_restream.sg_data is not None:
-        start_time = curr_restream.sg_data.match_time
+        if curr_restream.week.spoiler:
+            start_time = curr_restream.sg_data.match_time
+        else:
+            start_time = curr_restream.sg_data.match_time - timedelta(minutes=10)
     if race_started_at is not None:
         start_time = race_started_at
 
