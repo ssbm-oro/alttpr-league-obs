@@ -138,15 +138,6 @@ def on_load(event):
             obs.obs_property_set_enabled(channel_list, False)
         if token_textbox:
             obs.obs_property_set_enabled(token_textbox, False)
-        pass
-    if event == obs.OBS_FRONTEND_EVENT_STREAMING_STARTED:
-        if (refresh_crew_button):
-            obs.obs_property_set_enabled(refresh_crew_button, True)
-        pass
-    if event == obs.OBS_FRONTEND_EVENT_STREAMING_STOPPING:
-        if (refresh_crew_button):
-            obs.obs_property_set_enabled(refresh_crew_button, False)
-        pass
     if event == obs.OBS_FRONTEND_EVENT_STREAMING_STOPPED:
         if channel_list:
             obs.obs_property_set_enabled(channel_list, True)
@@ -195,7 +186,6 @@ def script_properties():
         props, sp.refresh_crew_button, "Refresh Crew", lambda *props: None)
     obs.obs_property_set_modified_callback(
         refresh_crew_button, refresh_crew_pressed)
-    obs.obs_property_set_enabled(refresh_crew_button, False)
 
     global restart_p1_button
     global restart_p2_button
@@ -304,9 +294,9 @@ def update_layout(restream: RestreamEpisode):
     if restream is not None and restream.sg_data is not None:
         if restream.week is not None:
             week_no = restream.week.event[-1]
-            path = f"./../../../layouts/League_Season4-Open-week{week_no}.png"
+            path = f"https://images.alttprleague.com/RestreamImages/League_Season4-Open-week{week_no}.png"
             if restream.sg_data.is_invitational:                
-                path = f"./../../../layouts/League_Season4-week{week_no}.png"
+                path = f"https://images.alttprleague.com/RestreamImages/League_Season4-week{week_no}.png"
             if restream.week.coop:
                 set_source_file(sn.layout_4p, path)
             else:
