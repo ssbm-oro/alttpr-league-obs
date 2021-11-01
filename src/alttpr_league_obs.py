@@ -59,7 +59,7 @@ class source_names(str, Enum):
     week_mode = "Week # And Mode"
     countdown = "Time To Match"
     layout_2p = "2P Weekly Layout"
-    layout_4p = "4P Weekly layout"
+    layout_4p = "4P Weekly Layout"
     left_game = "LeftGame"
     left_timer = "LeftTimer"
     right_game = "RightGame"
@@ -375,7 +375,6 @@ def update_teams(players):
 def update_crew(restream: RestreamEpisode):
     comms = "C: "
     for comm in restream.sg_data.commentators[:-1]:
-        print(comm)
         comms += f"{comm.display_name}, "
     if len(restream.sg_data.commentators) > 0:
         comms += f"{restream.sg_data.commentators[-1].display_name}"
@@ -387,9 +386,7 @@ def update_crew(restream: RestreamEpisode):
         trackers += f"{restream.sg_data.trackers[-1].display_name}"
 
     set_source_text(sn.crew, f"{comms} {trackers}")
-    print(f"{comms} {trackers}")
     set_source_text(sn.crew4p, f"{comms}\n{trackers}")
-    print(f"{comms}\n{trackers}")
 
 def update_countdown():
     start_time :datetime
