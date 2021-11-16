@@ -111,7 +111,7 @@ restart_p4_button = None
 token_textbox = None
 race_started_at : datetime = None
 
-
+week_description = "Division Finals"
 def script_description():
     message = (
         "Select which channel you are broadcasting to load all pertinent data."
@@ -306,15 +306,15 @@ def update_intro(week: Week, match_time: datetime):
     if week:
         event_name = f"{week.event}: {week.mode_name}"
         if week.event == "A":
-            event_name = f"Race 1: {week.mode_name}"
+            event_name = f"{week_description} Race 1: {week.mode_name}"
         if week.event == "B":
-            event_name = f"Race 2: {week.mode_name}"
+            event_name = f"{week_description} Race 2: {week.mode_name}"
         if week.event == "C":
-            event_name = f"Race 3: {week.mode_name}"
+            event_name = f"{week_description} Race 3: {week.mode_name}"
         if week.event == "D":
-            event_name = f"Race 4: {week.mode_name}"
+            event_name = f"{week_description} Race 4: {week.mode_name}"
         if week.event == "E":
-            event_name = f"Race 5: {week.mode_name}"
+            event_name = f"{week_description} Race 5: {week.mode_name}"
         set_source_text(sn.week_mode, event_name)
     if match_time is not None:
         set_source_text(
