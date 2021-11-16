@@ -268,7 +268,7 @@ def new_channel_selected(props, prop, settings):
 
             update_intro(curr_restream.week, curr_restream.sg_data.match_time)
             update_players(players, True)
-            update_teams(players)
+            update_teams(players, curr_restream.in_playoffs)
             update_trackers(curr_restream)
             update_crew(curr_restream)
             update_layout(curr_restream)
@@ -304,7 +304,18 @@ def update_layout(restream: RestreamEpisode):
 
 def update_intro(week: Week, match_time: datetime):
     if week:
-        set_source_text(sn.week_mode, f"{week.event}: {week.mode_name}")
+        event_name = f"{week.event}: {week.mode_name}"
+        if week.event == "A":
+            event_name = f"Race 1: {week.mode_name}"
+        if week.event == "B":
+            event_name = f"Race 2: {week.mode_name}"
+        if week.event == "C":
+            event_name = f"Race 3: {week.mode_name}"
+        if week.event == "D":
+            event_name = f"Race 4: {week.mode_name}"
+        if week.event == "E":
+            event_name = f"Race 5: {week.mode_name}"
+        set_source_text(sn.week_mode, event_name)
     if match_time is not None:
         set_source_text(
             sn.scedule_time,
@@ -364,11 +375,16 @@ def update_trackers(restream: RestreamEpisode):
         set_source_url(sn.left_tracker, restream.sg_data.players[0].tracker)
         set_source_url(sn.right_tracker, restream.sg_data.players[1].tracker)
 
-def update_teams(players):
+def update_teams(players, in_playoffs = False):
     l_team = players[0].team
     r_team = players[1].team
-    set_source_text(sn.left_team, f"{l_team.team_name} - {l_team.points}")
-    set_source_text(sn.right_team, f"{r_team.team_name} - {r_team.points}")
+    if (in_playoffs):
+        set_source_text(sn.left_team, f"{l_team.team_name}")
+        set_source_text(sn.right_team, f"{r_team.team_name}")
+    else:
+        set_source_text(sn.left_team, f"{l_team.team_name} - {l_team.points}")
+        set_source_text(sn.right_team, f"{r_team.team_name} - {r_team.points}")
+
     set_source_file(sn.left_team_logo, l_team.team_logo)
     set_source_file(sn.right_team_logo, r_team.team_logo)
 

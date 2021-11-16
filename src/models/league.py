@@ -311,12 +311,13 @@ class RestreamEpisode:
     rtgg_slug: Optional[str]
     rtgg_status: Optional[str]
     week: Optional[Week]
+    in_playoffs: Optional[bool]
 
     def __init__(
         self, channel: Optional[str], tracker_prefix: Optional[str],
         twitch_stream_key: Optional[str], sg_data: Optional[SgData],
         rtgg_slug: Optional[str], rtgg_status: Optional[str],
-        week: Optional[Week]
+        week: Optional[Week], in_playoffs: Optional[bool]
     ) -> None:
         self.channel = channel
         self.tracker_prefix = tracker_prefix
@@ -325,6 +326,7 @@ class RestreamEpisode:
         self.rtgg_slug = rtgg_slug
         self.rtgg_status = rtgg_status
         self.week = week
+        self.in_playoffs = in_playoffs
 
     @staticmethod
     def from_dict(obj: Any) -> 'RestreamEpisode':
@@ -340,9 +342,10 @@ class RestreamEpisode:
         rtgg_slug = from_union([from_str, from_none], obj.get("rtgg_slug"))
         rtgg_status = from_union([from_str, from_none], obj.get("rtgg_status"))
         week = from_union([from_none, Week.from_dict], obj.get("week"))
+        in_playoffs = from_union([from_none, from_bool], obj.get("in_playoffs"))
         return RestreamEpisode(
             channel, tracker_prefix, twitch_stream_key,
-            sg_data, rtgg_slug, rtgg_status, week
+            sg_data, rtgg_slug, rtgg_status, week, in_playoffs
         )
 
 
